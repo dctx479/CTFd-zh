@@ -6,6 +6,269 @@ auto_translate_po.py - 自动翻译 .po 文件中的未翻译条目
     python auto_translate_po.py <po_file_path> [--provider <provider>]
 
 支持的 provider:
+    deepl    DeepL API，通过 DEEPL_API_URL 自定义端点
+    openai   OpenAI 兼容接口（SiliconFlow、本地 LLM 等），通过 OPENAI_API_URL 自定义
+
+环境变量（在 GitHub Actions Secrets / Variables 中配置）:
+
+    DEEPL_API_KEY    DeepL API Key（Secrets）
+    DEEPL_API_URL    DeepL 端点（Variables，可选）
+                     默认（免费版）: https://api-free.deepl.com/v2/translate
+                     Pro 版:        https://api.deepl.com/v2/translate
+
+    OPENAI_API_KEY   OpenAI 兼容 API Key（Secrets）
+    OPENAI_API_URL   API 端点（Variables，可选）
+                     默认: https://api.openai.com/v1/chat/completions
+                     SiliconFlow: https://api.siliconflow.cn/v1/chat/completions
+    OPENAI_MODEL     模型名（Variables，可选）
+                     默认: gpt-4o-mini
+"""
+
+import sys
+import os
+import time
+import json
+import urllib.request
+import urllib.error
+from pathlib import Path
+
+
+# ── 默认端点 ──────────────────────────────────────────────────────────────────
+DEFAULT_DEEPL_URL    = 'https://api-free.deepl.com/v2/translate'
+DEFAULT_OPENAI_URL   = 'https://api.openai.com/v1/chat/completions'
+DEFAULT_OPENAI_MODEL = 'gpt-4o-mini'
+
+
+# ── 语言代码映射 ──────────────────────────────────────────────────────────────
+DEEPL_LANG_MAP = {
+    'zh_Hans_CN': 'ZH',
+    'zh_Hant_TW': 'ZH-TW',
+    'ja': 'JA', 'ko': 'KO', 'fr': 'FR',
+    'de': 'DE', 'es': 'ES', 'ru': 'RU',
+    'pt_BR': 'PT-BR', 'ar': 'AR', 'it': 'IT',
+}
+
+HUMAN_LANG_MAP = {
+    'zh_Hans_CN': 'Simplified Chinese',
+    'zh_Hant_TW': 'Traditional Chinese',
+    'ja': 'Japanese', 'ko': 'Korean', 'fr': 'French',
+    'de': 'German', 'es': 'Spanish', 'ru': 'Russian',
+    'pt_BR': 'Brazilian Portuguese', 'ar': 'Arabic', 'it': 'Italian',
+}
+
+
+# ── .po 文件读写 ──────────────────────────────────────────────────────────────
+def read_po_file(po_path):
+    with open(po_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    entries = []
+    for block in content.split('\n\n'):
+        lines = block.strip().splitlines()
+        if not lines:
+            continue
+
+        msgid = msgstr = None
+        raw_before = []
+        in_msgid = in_msgstr = False
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if line.startswith('msgid '):
+                if msgid is not None:
+                    entries.append({'msgid': msgid, 'msgstr': msgstr, 'raw_before': raw_before})
+                msgid = _parse_po_string(line[6:])
+                msgstr = None
+                in_msgid, in_msgstr = True, False
+                raw_before = []
+            elif line.startswith('msgstr '):
+                msgstr = _parse_po_string(line[7:])
+                in_msgid, in_msgstr = False, True
+            elif line.startswith('"'):
+                if in_msgid:
+                    msgid = (msgid or '') + _parse_po_string(line)
+                elif in_msgstr:
+                    msgstr = (msgstr or '') + _parse_po_string(line)
+            else:
+                raw_before.append(line)
+            i += 1
+
+        if msgid is not None:
+            entries.append({'msgid': msgid, 'msgstr': msgstr, 'raw_before': raw_before})
+
+    return entries
+
+
+def _parse_po_string(s):
+    s = s.strip()
+    if s.startswith('"') and s.endswith('"'):
+        s = s[1:-1]
+    return s.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
+
+
+def _encode_po_string(s):
+    return s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+
+
+def write_po_file(po_path, entries):
+    lines = []
+    for entry in entries:
+        for raw_line in entry['raw_before']:
+            lines.append(raw_line)
+        lines.append(f'msgid "{_encode_po_string(entry["msgid"])}"')
+        lines.append(f'msgstr "{_encode_po_string(entry["msgstr"] or "")}"')
+        lines.append('')
+    with open(po_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+
+
+# ── HTTP 工具 ─────────────────────────────────────────────────────────────────
+def _http_post(url, headers, data):
+    payload = json.dumps(data).encode('utf-8')
+    req = urllib.request.Request(url, data=payload, headers=headers, method='POST')
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        raise RuntimeError(f"HTTP {e.code}: {body[:300]}") from e
+
+
+# ── 翻译后端 ──────────────────────────────────────────────────────────────────
+def translate_deepl(text, api_key, locale):
+    url = os.environ.get('DEEPL_API_URL', DEFAULT_DEEPL_URL)
+    result = _http_post(
+        url,
+        headers={
+            'Authorization': f'DeepL-Auth-Key {api_key}',
+            'Content-Type': 'application/json',
+        },
+        data={
+            'text': [text],
+            'target_lang': DEEPL_LANG_MAP.get(locale, 'ZH'),
+            'tag_handling': 'html',
+        },
+    )
+    return result['translations'][0]['text']
+
+
+def translate_openai(text, api_key, locale):
+    url   = os.environ.get('OPENAI_API_URL', DEFAULT_OPENAI_URL)
+    model = os.environ.get('OPENAI_MODEL',   DEFAULT_OPENAI_MODEL)
+    target_lang = HUMAN_LANG_MAP.get(locale, 'Simplified Chinese')
+
+    result = _http_post(
+        url,
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        },
+        data={
+            'model': model,
+            'temperature': 0,
+            'max_tokens': 300,
+            'messages': [
+                {
+                    'role': 'system',
+                    'content': (
+                        f'You are a professional UI translator. '
+                        f'Translate English strings to {target_lang}. '
+                        f'Preserve HTML tags, %(name)s placeholders, and special characters exactly. '
+                        f'Output only the translation, no explanation.'
+                    ),
+                },
+                {'role': 'user', 'content': text},
+            ],
+        },
+    )
+    return result['choices'][0]['message']['content'].strip()
+
+
+# ── 主流程 ────────────────────────────────────────────────────────────────────
+PROVIDERS = {
+    'deepl':  (translate_deepl,  'DEEPL_API_KEY'),
+    'openai': (translate_openai, 'OPENAI_API_KEY'),
+}
+
+
+def auto_translate(po_path, provider='deepl'):
+    translate_fn, key_env = PROVIDERS.get(provider, (None, None))
+    if translate_fn is None:
+        print(f"未知 provider: {provider}，支持: {list(PROVIDERS)}")
+        sys.exit(1)
+
+    api_key = os.environ.get(key_env)
+    if not api_key:
+        print(f"未设置 {key_env}，跳过翻译")
+        return 0
+
+    locale = 'zh_Hans_CN'
+    for part in Path(po_path).parts:
+        if part in HUMAN_LANG_MAP:
+            locale = part
+            break
+
+    if provider == 'deepl':
+        endpoint_info = os.environ.get('DEEPL_API_URL', DEFAULT_DEEPL_URL)
+    else:
+        endpoint_info = (f"{os.environ.get('OPENAI_MODEL', DEFAULT_OPENAI_MODEL)}"
+                         f" @ {os.environ.get('OPENAI_API_URL', DEFAULT_OPENAI_URL)}")
+    print(f"Locale: {locale}  Provider: {provider}  ({endpoint_info})")
+
+    entries = read_po_file(po_path)
+    untranslated = [e for e in entries if not e['msgstr'] and e['msgid']]
+    print(f"待翻译: {len(untranslated)}/{len(entries)} 条")
+
+    translated_count = 0
+    for i, entry in enumerate(untranslated):
+        msgid = entry['msgid']
+        try:
+            result = translate_fn(msgid, api_key, locale)
+            for e in entries:
+                if e['msgid'] == msgid and not e['msgstr']:
+                    e['msgstr'] = result
+                    break
+            translated_count += 1
+            print(f"  [{i+1}/{len(untranslated)}] ✓ {msgid[:40]!r} → {result[:30]!r}")
+            time.sleep(0.3)
+        except Exception as exc:
+            print(f"  [{i+1}/{len(untranslated)}] ✗ {msgid[:40]!r} — {exc}")
+
+    if translated_count > 0:
+        write_po_file(po_path, entries)
+        print(f"\n✓ {translated_count}/{len(untranslated)} 条已写入")
+    else:
+        print("没有新条目被翻译")
+    return translated_count
+
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        sys.exit(1)
+
+    po_path  = sys.argv[1]
+    provider = 'deepl'
+    if '--provider' in sys.argv:
+        idx = sys.argv.index('--provider')
+        if idx + 1 < len(sys.argv):
+            provider = sys.argv[idx + 1]
+
+    if not os.path.exists(po_path):
+        print(f"错误: 文件不存在: {po_path}")
+        sys.exit(1)
+
+    auto_translate(po_path, provider)
+
+
+if __name__ == '__main__':
+    main()
+
+
+用法:
+    python auto_translate_po.py <po_file_path> [--provider <provider>]
+
+支持的 provider:
     deepl       DeepL API（免费版或 Pro 版，通过 DEEPL_API_URL 自定义端点）
     openai      OpenAI 兼容接口（支持 Ollama、SiliconFlow 等，通过 OPENAI_API_URL 自定义）
     anthropic   Anthropic Claude API

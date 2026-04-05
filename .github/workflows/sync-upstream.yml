@@ -13,28 +13,22 @@ name: Sync Upstream & Auto-Localize
 #                      默认: zh_Hans_CN zh_Hant_TW
 #   PYTHON_VERSION     Python 版本
 #                      默认: 3.11
-#   TRANSLATE_PROVIDER 翻译提供商：deepl | openai | anthropic
+#   TRANSLATE_PROVIDER 翻译提供商：deepl | openai
 #                      默认: deepl（未配置 API Key 时自动跳过）
-#   OPENAI_API_URL     OpenAI 兼容端点（provider=openai 时可选）
-#                      默认: https://api.openai.com/v1/chat/completions
-#                      示例: https://api.siliconflow.cn/v1/chat/completions
-#                             http://your-ollama-host:11434/v1/chat/completions
-#   OPENAI_MODEL       模型名称（provider=openai 时可选）
-#                      默认: gpt-4o-mini
 #   DEEPL_API_URL      DeepL 端点（provider=deepl 时可选）
 #                      默认（免费版）: https://api-free.deepl.com/v2/translate
 #                      Pro 版:        https://api.deepl.com/v2/translate
-#   ANTHROPIC_API_URL  Anthropic 端点（provider=anthropic 时可选）
-#                      默认: https://api.anthropic.com
-#   ANTHROPIC_MODEL    模型名称（provider=anthropic 时可选）
-#                      默认: claude-haiku-4-5-20251001
+#   OPENAI_API_URL     OpenAI 兼容端点（provider=openai 时可选）
+#                      默认: https://api.openai.com/v1/chat/completions
+#                      示例: https://api.siliconflow.cn/v1/chat/completions
+#   OPENAI_MODEL       模型名称（provider=openai 时可选）
+#                      默认: gpt-4o-mini
 #
 # Secrets（Settings → Secrets and variables → Actions → Secrets）:
 #
 #   PAT_TOKEN          Personal Access Token（可选，用于触发后续 Actions）
 #   DEEPL_API_KEY      DeepL API Key
-#   OPENAI_API_KEY     OpenAI 兼容 API Key（SiliconFlow / Ollama 等同理）
-#   ANTHROPIC_API_KEY  Anthropic API Key
+#   OPENAI_API_KEY     OpenAI 兼容 API Key（SiliconFlow 等同理）
 # ============================================================
 
 on:
@@ -55,12 +49,9 @@ env:
   LOCALES:            ${{ vars.LOCALES            || 'zh_Hans_CN zh_Hant_TW' }}
   PYTHON_VERSION:     ${{ vars.PYTHON_VERSION     || '3.11' }}
   TRANSLATE_PROVIDER: ${{ vars.TRANSLATE_PROVIDER || 'deepl' }}
-  # 翻译端点（均可通过 Variables 覆盖）
   DEEPL_API_URL:      ${{ vars.DEEPL_API_URL      || 'https://api-free.deepl.com/v2/translate' }}
   OPENAI_API_URL:     ${{ vars.OPENAI_API_URL     || 'https://api.openai.com/v1/chat/completions' }}
   OPENAI_MODEL:       ${{ vars.OPENAI_MODEL       || 'gpt-4o-mini' }}
-  ANTHROPIC_API_URL:  ${{ vars.ANTHROPIC_API_URL  || 'https://api.anthropic.com' }}
-  ANTHROPIC_MODEL:    ${{ vars.ANTHROPIC_MODEL    || 'claude-haiku-4-5-20251001' }}
 
 jobs:
   sync:
@@ -128,16 +119,12 @@ jobs:
             echo "✓ DeepL @ $DEEPL_API_URL"
           elif [ "$TRANSLATE_PROVIDER" = "openai" ] && [ -n "$OPENAI_API_KEY" ]; then
             echo "✓ OpenAI-compatible: $OPENAI_MODEL @ $OPENAI_API_URL"
-          elif [ "$TRANSLATE_PROVIDER" = "anthropic" ] && [ -n "$ANTHROPIC_API_KEY" ]; then
-            pip install anthropic
-            echo "✓ Anthropic: $ANTHROPIC_MODEL @ $ANTHROPIC_API_URL"
           else
             echo "未配置翻译 API Key，新增字符串将留空等待人工翻译"
           fi
         env:
-          DEEPL_API_KEY:     ${{ secrets.DEEPL_API_KEY }}
-          OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPL_API_KEY:  ${{ secrets.DEEPL_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Extract new translation strings
         if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
@@ -167,14 +154,12 @@ jobs:
       - name: Auto-translate new strings via API
         if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
         env:
-          DEEPL_API_KEY:     ${{ secrets.DEEPL_API_KEY }}
-          OPENAI_API_KEY:    ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPL_API_KEY:  ${{ secrets.DEEPL_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           HAS_API=false
-          if [ "$TRANSLATE_PROVIDER" = "deepl" ]     && [ -n "$DEEPL_API_KEY" ];     then HAS_API=true; fi
-          if [ "$TRANSLATE_PROVIDER" = "openai" ]    && [ -n "$OPENAI_API_KEY" ];    then HAS_API=true; fi
-          if [ "$TRANSLATE_PROVIDER" = "anthropic" ] && [ -n "$ANTHROPIC_API_KEY" ]; then HAS_API=true; fi
+          if [ "$TRANSLATE_PROVIDER" = "deepl" ]  && [ -n "$DEEPL_API_KEY" ];  then HAS_API=true; fi
+          if [ "$TRANSLATE_PROVIDER" = "openai" ] && [ -n "$OPENAI_API_KEY" ]; then HAS_API=true; fi
 
           if [ "$HAS_API" = "false" ]; then
             echo "未配置翻译 API，跳过此步骤"
