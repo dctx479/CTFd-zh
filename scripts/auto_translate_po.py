@@ -3,238 +3,327 @@
 auto_translate_po.py - 自动翻译 .po 文件中的未翻译条目
 
 用法:
-    python auto_translate_po.py <po_file_path> [--provider deepl|anthropic]
+    python auto_translate_po.py <po_file_path> [--provider <provider>]
 
-环境变量:
-    DEEPL_API_KEY      DeepL API Key（必需，当 provider=deepl）
-    ANTHROPIC_API_KEY  Anthropic API Key（必需，当 provider=anthropic）
-    TRANSLATE_TARGET   目标语言代码，默认 zh_CN（简体中文）或 zh_TW（繁体中文）
+支持的 provider:
+    deepl       DeepL API（免费版或 Pro 版，通过 DEEPL_API_URL 自定义端点）
+    openai      OpenAI 兼容接口（支持 Ollama、SiliconFlow 等，通过 OPENAI_API_URL 自定义）
+    anthropic   Anthropic Claude API
+
+环境变量（在 GitHub Actions Secrets 中配置）:
+    DEEPL_API_KEY       DeepL API Key
+    DEEPL_API_URL       DeepL API 端点（可选）
+                        默认: https://api-free.deepl.com/v2/translate
+                        Pro 版: https://api.deepl.com/v2/translate
+
+    OPENAI_API_KEY      OpenAI 兼容 API Key
+    OPENAI_API_URL      OpenAI 兼容 API 端点（可选）
+                        默认: https://api.openai.com/v1/chat/completions
+                        Ollama:      http://localhost:11434/v1/chat/completions
+                        SiliconFlow: https://api.siliconflow.cn/v1/chat/completions
+    OPENAI_MODEL        使用的模型名称（可选）
+                        默认: gpt-4o-mini
+
+    ANTHROPIC_API_KEY   Anthropic API Key
+    ANTHROPIC_API_URL   Anthropic API 端点（可选）
+                        默认: https://api.anthropic.com
+    ANTHROPIC_MODEL     使用的模型名称（可选）
+                        默认: claude-haiku-4-5-20251001
 """
 
 import sys
 import os
-import re
 import time
+import json
+import urllib.request
+import urllib.error
 from pathlib import Path
 
 
+# ── 默认端点（可通过环境变量覆盖）────────────────────────────────────────────
+DEFAULT_DEEPL_URL      = 'https://api-free.deepl.com/v2/translate'
+DEFAULT_OPENAI_URL     = 'https://api.openai.com/v1/chat/completions'
+DEFAULT_OPENAI_MODEL   = 'gpt-4o-mini'
+DEFAULT_ANTHROPIC_URL  = 'https://api.anthropic.com'
+DEFAULT_ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
+
+
+# ── 语言代码映射 ──────────────────────────────────────────────────────────────
+DEEPL_LANG_MAP = {
+    'zh_Hans_CN': 'ZH',
+    'zh_Hant_TW': 'ZH-TW',
+    'ja': 'JA',
+    'ko': 'KO',
+    'fr': 'FR',
+    'de': 'DE',
+    'es': 'ES',
+    'ru': 'RU',
+    'pt_BR': 'PT-BR',
+    'ar': 'AR',
+    'it': 'IT',
+}
+
+HUMAN_LANG_MAP = {
+    'zh_Hans_CN': 'Simplified Chinese',
+    'zh_Hant_TW': 'Traditional Chinese',
+    'ja': 'Japanese',
+    'ko': 'Korean',
+    'fr': 'French',
+    'de': 'German',
+    'es': 'Spanish',
+    'ru': 'Russian',
+    'pt_BR': 'Brazilian Portuguese',
+    'ar': 'Arabic',
+    'it': 'Italian',
+}
+
+
+# ── .po 文件读写 ──────────────────────────────────────────────────────────────
 def read_po_file(po_path):
-    """读取 .po 文件，返回 msgid -> msgstr 字典和原始内容列表"""
+    """解析 .po 文件，返回条目列表。每个条目: {msgid, msgstr, raw_before}"""
     with open(po_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
+        content = f.read()
 
+    # 按空行分块
+    blocks = content.split('\n\n')
     entries = []
-    current_msgid = None
-    current_msgstr = None
-    in_msgid = False
-    in_msgstr = False
-    comment_lines = []
 
-    for line in lines:
-        stripped = line.rstrip('\n')
-
-        # 收集注释/元数据行
-        if stripped.startswith('#'):
-            comment_lines.append(stripped)
+    for block in blocks:
+        lines = block.strip().splitlines()
+        if not lines:
             continue
 
-        # 遇到空行，保存之前的条目
-        if stripped == '':
-            if current_msgid is not None:
-                entries.append({
-                    'msgid': current_msgid,
-                    'msgstr': current_msgstr,
-                    'comments': comment_lines[:],
-                })
-                current_msgid = None
-                current_msgstr = None
-                comment_lines = []
-            continue
+        msgid = None
+        msgstr = None
+        raw_before = []  # 注释 / 元数据行
 
-        # 解析 msgid
-        if stripped.startswith('msgid '):
-            # 如果之前有未保存的条目，先保存
-            if current_msgid is not None:
-                entries.append({
-                    'msgid': current_msgid,
-                    'msgstr': current_msgstr,
-                    'comments': comment_lines[:],
-                })
-            current_msgid = stripped[6:].strip('"')
-            current_msgstr = None
-            in_msgid = True
-            in_msgstr = False
-            comment_lines = []
-        elif stripped.startswith('msgstr '):
-            current_msgstr = stripped[7:].strip('"')
-            in_msgid = False
-            in_msgstr = True
-        elif stripped.startswith('"') and (in_msgid or in_msgstr):
-            # 多行字符串 continuation
-            content = stripped.strip('"')
-            if in_msgid and current_msgid is not None:
-                current_msgid += content
-            elif in_msgstr and current_msgstr is not None:
-                current_msgstr += content
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if line.startswith('msgid '):
+                msgid = _parse_po_string(line[6:])
+                # 多行 msgid
+                i += 1
+                while i < len(lines) and lines[i].startswith('"'):
+                    msgid += _parse_po_string(lines[i])
+                    i += 1
+                continue
+            elif line.startswith('msgstr '):
+                msgstr = _parse_po_string(line[7:])
+                i += 1
+                while i < len(lines) and lines[i].startswith('"'):
+                    msgstr += _parse_po_string(lines[i])
+                    i += 1
+                continue
+            else:
+                raw_before.append(line)
+            i += 1
 
-    # 保存最后一个条目
-    if current_msgid is not None:
-        entries.append({
-            'msgid': current_msgid,
-            'msgstr': current_msgstr,
-            'comments': comment_lines[:],
-        })
+        if msgid is not None and msgstr is not None:
+            entries.append({
+                'msgid': msgid,
+                'msgstr': msgstr,
+                'raw_before': raw_before,
+            })
 
-    return entries, lines
+    return entries
 
 
-def translate_with_deepl(text, api_key, target_lang='ZH'):
-    """使用 DeepL API 翻译文本"""
-    import urllib.request
-    import json
+def _parse_po_string(s):
+    """去掉 .po 字符串的首尾引号并处理转义"""
+    s = s.strip()
+    if s.startswith('"') and s.endswith('"'):
+        s = s[1:-1]
+    return s.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
 
-    url = 'https://api-free.deepl.com/v2/translate'
-    data = {
-        'text': [text],
-        'target_lang': target_lang,
-        'tag_handling': 'html',  # 保留 HTML 标签
-    }
 
-    req = urllib.request.Request(url)
-    req.add_header('Authorization', f'DeepL-Auth-Key {api_key}')
-    req.add_header('Content-Type', 'application/json')
+def _encode_po_string(s):
+    """将字符串编码回 .po 格式"""
+    return s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
 
+
+def write_po_file(po_path, entries):
+    """将条目写回 .po 文件"""
+    lines = []
+    for entry in entries:
+        for raw_line in entry['raw_before']:
+            lines.append(raw_line)
+        lines.append(f'msgid "{_encode_po_string(entry["msgid"])}"')
+        lines.append(f'msgstr "{_encode_po_string(entry["msgstr"])}"')
+        lines.append('')
+
+    with open(po_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+
+
+# ── 翻译后端 ──────────────────────────────────────────────────────────────────
+def _http_post(url, headers, data):
+    """通用 HTTP POST，返回解析后的 JSON"""
     payload = json.dumps(data).encode('utf-8')
-    response = urllib.request.urlopen(req, payload)
-    result = json.loads(response.read().decode('utf-8'))
+    req = urllib.request.Request(url, data=payload, headers=headers, method='POST')
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        raise RuntimeError(f"HTTP {e.code}: {body[:200]}") from e
 
+
+def translate_deepl(text, api_key, locale):
+    """DeepL API 翻译"""
+    url = os.environ.get('DEEPL_API_URL', DEFAULT_DEEPL_URL)
+    target_lang = DEEPL_LANG_MAP.get(locale, 'ZH')
+
+    result = _http_post(
+        url,
+        headers={
+            'Authorization': f'DeepL-Auth-Key {api_key}',
+            'Content-Type': 'application/json',
+        },
+        data={
+            'text': [text],
+            'target_lang': target_lang,
+            'tag_handling': 'html',
+        },
+    )
     return result['translations'][0]['text']
 
 
-def translate_with_anthropic(text, api_key, target_lang='Simplified Chinese'):
-    """使用 Anthropic (Claude) API 翻译文本"""
-    import anthropic
+def translate_openai(text, api_key, locale):
+    """OpenAI 兼容 API 翻译（支持自定义端点）"""
+    url   = os.environ.get('OPENAI_API_URL', DEFAULT_OPENAI_URL)
+    model = os.environ.get('OPENAI_MODEL',   DEFAULT_OPENAI_MODEL)
+    target_lang = HUMAN_LANG_MAP.get(locale, 'Simplified Chinese')
 
-    client = anthropic.Anthropic(api_key=api_key)
-
-    prompt = f"""Translate the following English text to {target_lang}. Preserve any HTML tags, placeholders like %(name)s, {{% trans %}}, and special characters exactly as they are. Only output the translated text, nothing else.
-
-Text: "{text}"
-
-Translation:"""
-
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=200,
-        temperature=0,
-        messages=[{
-            "role": "user",
-            "content": prompt
-        }]
+    result = _http_post(
+        url,
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        },
+        data={
+            'model': model,
+            'temperature': 0,
+            'max_tokens': 300,
+            'messages': [
+                {
+                    'role': 'system',
+                    'content': (
+                        f'You are a professional translator. '
+                        f'Translate English UI strings to {target_lang}. '
+                        f'Preserve HTML tags, placeholders like %(name)s, and special characters exactly. '
+                        f'Output only the translated text, nothing else.'
+                    ),
+                },
+                {'role': 'user', 'content': text},
+            ],
+        },
     )
-
-    return message.content[0].text.strip()
-
-
-def get_target_language(locale_code):
-    """根据 locale 代码返回翻译 API 的目标语言"""
-    lang_map = {
-        'zh_Hans_CN': 'ZH',       # DeepL: ZH (Simplified)
-        'zh_Hant_TW': 'ZH-TW',    # DeepL: ZH-TW (Traditional)
-        'ja': 'JA',
-        'ko': 'KO',
-        'fr': 'FR',
-        'de': 'DE',
-        'es': 'ES',
-    }
-    return lang_map.get(locale_code, 'ZH')
+    return result['choices'][0]['message']['content'].strip()
 
 
-def auto_translate_entries(entries, provider='deepl', locale='zh_Hans_CN'):
-    """自动翻译所有 msgstr 为空的条目"""
-    api_key_env = 'DEEPL_API_KEY' if provider == 'deepl' else 'ANTHROPIC_API_KEY'
-    api_key = os.environ.get(api_key_env)
+def translate_anthropic(text, api_key, locale):
+    """Anthropic Claude API 翻译（支持自定义端点）"""
+    base_url = os.environ.get('ANTHROPIC_API_URL', DEFAULT_ANTHROPIC_URL).rstrip('/')
+    model    = os.environ.get('ANTHROPIC_MODEL',   DEFAULT_ANTHROPIC_MODEL)
+    target_lang = HUMAN_LANG_MAP.get(locale, 'Simplified Chinese')
 
+    result = _http_post(
+        f'{base_url}/v1/messages',
+        headers={
+            'x-api-key': api_key,
+            'anthropic-version': '2023-06-01',
+            'Content-Type': 'application/json',
+        },
+        data={
+            'model': model,
+            'max_tokens': 300,
+            'temperature': 0,
+            'messages': [{
+                'role': 'user',
+                'content': (
+                    f'Translate this English UI string to {target_lang}. '
+                    f'Preserve HTML tags, placeholders like %(name)s, and special characters exactly. '
+                    f'Output only the translated text:\n\n"{text}"'
+                ),
+            }],
+        },
+    )
+    return result['content'][0]['text'].strip().strip('"')
+
+
+# ── 主流程 ────────────────────────────────────────────────────────────────────
+TRANSLATE_FN = {
+    'deepl':     (translate_deepl,     'DEEPL_API_KEY'),
+    'openai':    (translate_openai,    'OPENAI_API_KEY'),
+    'anthropic': (translate_anthropic, 'ANTHROPIC_API_KEY'),
+}
+
+
+def auto_translate(po_path, provider='deepl'):
+    translate_fn, key_env = TRANSLATE_FN.get(provider, (None, None))
+    if translate_fn is None:
+        print(f"未知 provider: {provider}，支持: {list(TRANSLATE_FN)}")
+        sys.exit(1)
+
+    api_key = os.environ.get(key_env)
     if not api_key:
-        print(f"警告: 未设置 {api_key_env}，跳过自动翻译")
+        print(f"未设置 {key_env}，跳过翻译")
         return 0
 
-    target_lang = get_target_language(locale)
-    anthropic_target = 'Simplified Chinese' if locale == 'zh_Hans_CN' else 'Traditional Chinese'
+    # 从路径推断 locale
+    locale = 'zh_Hans_CN'
+    for part in Path(po_path).parts:
+        if part in HUMAN_LANG_MAP:
+            locale = part
+            break
+
+    print(f"文件: {po_path}")
+    print(f"Locale: {locale}  Provider: {provider}  模型/端点: ", end='')
+    if provider == 'openai':
+        print(f"{os.environ.get('OPENAI_MODEL', DEFAULT_OPENAI_MODEL)} @ "
+              f"{os.environ.get('OPENAI_API_URL', DEFAULT_OPENAI_URL)}")
+    elif provider == 'anthropic':
+        print(f"{os.environ.get('ANTHROPIC_MODEL', DEFAULT_ANTHROPIC_MODEL)} @ "
+              f"{os.environ.get('ANTHROPIC_API_URL', DEFAULT_ANTHROPIC_URL)}")
+    elif provider == 'deepl':
+        print(os.environ.get('DEEPL_API_URL', DEFAULT_DEEPL_URL))
+
+    entries = read_po_file(po_path)
+    untranslated = [e for e in entries if not e['msgstr'] and e['msgid']]
+    print(f"待翻译: {len(untranslated)}/{len(entries)} 条")
 
     translated_count = 0
-    total_untranslated = sum(1 for e in entries if not e['msgstr'] and e['msgid'])
+    for i, entry in enumerate(untranslated):
+        msgid = entry['msgid']
+        try:
+            result = translate_fn(msgid, api_key, locale)
+            # 写回到 entries 对应位置
+            for e in entries:
+                if e['msgid'] == msgid and not e['msgstr']:
+                    e['msgstr'] = result
+                    break
+            translated_count += 1
+            print(f"  [{i+1}/{len(untranslated)}] ✓ {msgid[:40]!r} → {result[:30]!r}")
+            time.sleep(0.3)  # 避免触发速率限制
+        except Exception as exc:
+            print(f"  [{i+1}/{len(untranslated)}] ✗ {msgid[:40]!r} — {exc}")
 
-    print(f"找到 {total_untranslated} 条未翻译字符串")
+    if translated_count > 0:
+        write_po_file(po_path, entries)
+        print(f"\n✓ 翻译完成: {translated_count}/{len(untranslated)} 条已写入")
+    else:
+        print("没有新条目被翻译")
 
-    for i, entry in enumerate(entries):
-        if not entry['msgstr'] and entry['msgid']:
-            msgid = entry['msgid'].replace('\\n', '\n').replace('\\"', '"')
-
-            # 跳过复数形式（plural forms）— Babel 会处理
-            if msgid.startswith('(') or msgid.endswith(')'):
-                continue
-
-            try:
-                if provider == 'deepl':
-                    translated = translate_with_deepl(msgid, api_key, target_lang)
-                else:
-                    translated = translate_with_anthropic(msgid, api_key, anthropic_target)
-
-                # 清理翻译结果
-                translated = translated.strip().strip('"').replace('\n', '\\n').replace('"', '\\"')
-                entry['msgstr'] = translated
-                translated_count += 1
-                print(f"  [{i+1}/{len(entries)}] ✓ {msgid[:50]}... → {translated[:30]}...")
-
-                # API 速率限制：每次请求后等待
-                time.sleep(0.5)
-
-            except Exception as e:
-                print(f"  [{i+1}/{len(entries)}] ✗ 翻译失败: {e}")
-                print(f"     原文: {msgid[:80]}")
-
-    print(f"\n完成: {translated_count}/{total_untranslated} 条已翻译")
     return translated_count
-
-
-def write_po_file(po_path, entries, original_lines):
-    """将翻译后的条目写回 .po 文件"""
-    output_lines = []
-
-    for entry in entries:
-        # 写入注释
-        for comment in entry['comments']:
-            output_lines.append(comment + '\n')
-
-        # 写入 msgid
-        if '\n' in entry['msgid']:
-            output_lines.append(f'msgid ""\n')
-            output_lines.append(f'"{entry["msgid"]}"\n')
-        else:
-            output_lines.append(f'msgid "{entry["msgid"]}"\n')
-
-        # 写入 msgstr
-        if '\n' in entry['msgstr']:
-            output_lines.append(f'msgstr ""\n')
-            output_lines.append(f'"{entry["msgstr"]}"\n')
-        else:
-            output_lines.append(f'msgstr "{entry["msgstr"]}"\n')
-
-        output_lines.append('\n')
-
-    with open(po_path, 'w', encoding='utf-8') as f:
-        f.writelines(output_lines)
-
-    print(f"已写入 {po_path} ({len(entries)} 个条目)")
 
 
 def main():
     if len(sys.argv) < 2:
-        print("用法: python auto_translate_po.py <po_file_path> [--provider deepl|anthropic]")
+        print(__doc__)
         sys.exit(1)
 
-    po_path = sys.argv[1]
+    po_path  = sys.argv[1]
     provider = 'deepl'
     if '--provider' in sys.argv:
         idx = sys.argv.index('--provider')
@@ -245,26 +334,7 @@ def main():
         print(f"错误: 文件不存在: {po_path}")
         sys.exit(1)
 
-    # 从路径推断 locale
-    path_parts = Path(po_path).parts
-    locale = 'zh_Hans_CN'
-    for part in path_parts:
-        if part in ('zh_Hans_CN', 'zh_Hant_TW', 'ja', 'ko', 'fr', 'de', 'es'):
-            locale = part
-            break
-
-    print(f"处理文件: {po_path}")
-    print(f"Locale: {locale}")
-    print(f"翻译提供商: {provider}")
-
-    entries, original_lines = read_po_file(po_path)
-    count = auto_translate_entries(entries, provider=provider, locale=locale)
-
-    if count > 0:
-        write_po_file(po_path, entries, original_lines)
-        print(f"✓ 成功翻译 {count} 条")
-    else:
-        print("没有需要翻译的新字符串")
+    auto_translate(po_path, provider)
 
 
 if __name__ == '__main__':
