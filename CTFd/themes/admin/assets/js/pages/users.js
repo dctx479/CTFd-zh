@@ -8,8 +8,6 @@ function deleteSelectedUsers(_event) {
   let userIDs = $("input[data-user-id]:checked").map(function () {
     return $(this).data("user-id");
   });
-  let target = userIDs.length === 1 ? "user" : "users";
-
   ezQuery({
     title: "删除用户",
     body: `确定要删除 ${userIDs.length} 个用户吗？`,

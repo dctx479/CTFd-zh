@@ -8,8 +8,6 @@ function deleteSelectedTeams(_event) {
   let teamIDs = $("input[data-team-id]:checked").map(function () {
     return $(this).data("team-id");
   });
-  let target = teamIDs.length === 1 ? "team" : "teams";
-
   ezQuery({
     title: "删除队伍",
     body: `确定要删除 ${teamIDs.length} 个队伍吗？`,

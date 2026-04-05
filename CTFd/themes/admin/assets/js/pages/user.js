@@ -230,8 +230,6 @@ function correctSubmissions(_event) {
   let submissionIDs = submissions.map(function () {
     return $(this).data("submission-id");
   });
-  let target = submissionIDs.length === 1 ? "submission" : "submissions";
-
   ezQuery({
     title: "标记正确",
     body: `确定要将 ${submissionIDs.length} 个提交标记为正确吗？`,
@@ -278,8 +276,6 @@ function deleteSelectedSubmissions(event, target) {
   let submissionIDs = submissions.map(function () {
     return $(this).data("submission-id");
   });
-  let target_string = submissionIDs.length === 1 ? type : type + "s";
-
   ezQuery({
     title: `删除${title}`,
     body: `确定要删除 ${submissionIDs.length} 条记录吗？`,
@@ -299,8 +295,6 @@ function deleteSelectedAwards(_event) {
   let awardIDs = $("input[data-award-id]:checked").map(function () {
     return $(this).data("award-id");
   });
-  let target = awardIDs.length === 1 ? "award" : "awards";
-
   ezQuery({
     title: `删除奖励`,
     body: `确定要删除 ${awardIDs.length} 个奖励吗？`,
@@ -331,8 +325,6 @@ function solveSelectedMissingChallenges(event) {
       return $(this).data("missing-challenge-id");
     },
   );
-  let target = challengeIDs.length === 1 ? "challenge" : "challenges";
-
   ezQuery({
     title: `标记正确`,
     body: `确定要将 ${

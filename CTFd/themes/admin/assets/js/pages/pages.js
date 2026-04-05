@@ -7,8 +7,6 @@ function deleteSelectedUsers(_event) {
   let pageIDs = $("input[data-page-id]:checked").map(function () {
     return $(this).data("page-id");
   });
-  let target = pageIDs.length === 1 ? "page" : "pages";
-
   ezQuery({
     title: "删除页面",
     body: `确定要删除 ${pageIDs.length} 个页面吗？`,

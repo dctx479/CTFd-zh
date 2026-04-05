@@ -264,6 +264,7 @@ function importCSV(event) {
     width: 0,
     title: "上传进度",
   });
+  $.ajax({
     type: "POST",
     data: form_data,
     processData: false,

@@ -35,8 +35,6 @@ function deleteSelectedSubmissions(_event) {
   let submissionIDs = $("input[data-submission-id]:checked").map(function () {
     return $(this).data("submission-id");
   });
-  let target = submissionIDs.length === 1 ? "submission" : "submissions";
-
   ezQuery({
     title: "删除提交",
     body: `确定要删除 ${submissionIDs.length} 个提交吗？`,
@@ -56,8 +54,6 @@ function correctSubmissions(_event) {
   let submissionIDs = $("input[data-submission-id]:checked").map(function () {
     return $(this).data("submission-id");
   });
-  let target = submissionIDs.length === 1 ? "submission" : "submissions";
-
   ezQuery({
     title: "标记正确",
     body: `确定要将 ${submissionIDs.length} 个提交标记为正确吗？`,
