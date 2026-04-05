@@ -15,7 +15,7 @@
           type="button"
           @click="addBracket()"
         >
-          Add New Bracket
+          添加新分组
         </button>
       </div>
     </div>

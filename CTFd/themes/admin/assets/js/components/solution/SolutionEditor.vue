@@ -3,8 +3,8 @@
     <form method="POST" @submit.prevent="submitSolution">
       <div class="form-group">
         <label>
-          Content<br />
-          <small>Markdown &amp; HTML are supported</small>
+          内容<br />
+          <small>支持 Markdown 和 HTML</small>
         </label>
         <textarea
           type="text"
@@ -21,24 +21,24 @@
 
       <div class="form-group">
         <label>
-          State<br />
-          <small>Controls who can view this solution</small>
+          状态<br />
+          <small>控制谁可以查看此题解</small>
         </label>
         <select class="form-control custom-select" name="state" v-model="state">
-          <option value="hidden">Hidden</option>
-          <option value="visible">Visible</option>
-          <option value="solved">Solved</option>
+          <option value="hidden">隐藏</option>
+          <option value="visible">可见</option>
+          <option value="solved">已解答</option>
         </select>
       </div>
       <button class="btn btn-primary float-right" type="submit">
-        {{ solution_id ? "Update" : "Create" }} Solution
+        {{ solution_id ? "更新" : "创建" }}题解
       </button>
       <div
         v-if="loading"
         class="spinner-border spinner-border-sm ml-2"
         role="status"
       >
-        <span class="sr-only">Loading...</span>
+        <span class="sr-only">加载中...</span>
       </div>
     </form>
   </div>

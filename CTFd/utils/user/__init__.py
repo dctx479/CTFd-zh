@@ -260,9 +260,8 @@ def get_locale():
     default_locale = get_config("default_locale")
     if default_locale:
         return default_locale
-    # Detect the user's browser specified language
-    languages = Languages.values()
-    return request.accept_languages.best_match(languages)
+    # Default to Simplified Chinese
+    return 'zh_CN'
 
 
 def get_current_user_recent_ips():

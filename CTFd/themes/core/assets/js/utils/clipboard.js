@@ -2,7 +2,7 @@ import { Tooltip } from "bootstrap";
 
 export function copyToClipboard($input) {
   const tooltip = new Tooltip($input, {
-    title: "Copied!",
+    title: "已复制！",
     trigger: "manual",
   });
 

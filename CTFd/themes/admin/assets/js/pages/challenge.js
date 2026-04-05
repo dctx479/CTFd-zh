@@ -56,9 +56,9 @@ function loadChalTemplate(challenge) {
               }
 
               ezAlert({
-                title: "Error",
+                title: "错误",
                 body: body,
-                button: "OK",
+                button: "确定",
               });
             }
           });
@@ -158,10 +158,10 @@ $(() => {
 
   $(".delete-challenge").click(function (_e) {
     ezQuery({
-      title: "Delete Challenge",
-      body: `Are you sure you want to delete <strong>${htmlEntities(
+      title: "删除题目",
+      body: `确定要删除 <strong>${htmlEntities(
         window.CHALLENGE_NAME,
-      )}</strong>`,
+      )}</strong> 吗？`,
       success: function () {
         CTFd.fetch("/api/v1/challenges/" + window.CHALLENGE_ID, {
           method: "DELETE",
@@ -225,8 +225,8 @@ $(() => {
                     break;
                 }
                 ezToast({
-                  title: "Success",
-                  body: "Your challenge has been updated!",
+                  title: "成功",
+                  body: "题目已更新！",
                 });
               } else {
                 let body = "";
@@ -236,9 +236,9 @@ $(() => {
                 }
 
                 ezAlert({
-                  title: "Error",
+                  title: "错误",
                   body: body,
-                  button: "OK",
+                  button: "确定",
                 });
               }
             });
@@ -246,8 +246,8 @@ $(() => {
         // Check if the challenge doesn't have any flags before marking visible
         if (response.data.length === 0 && params.state === "visible") {
           ezQuery({
-            title: "Missing Flags",
-            body: "This challenge does not have any flags meaning it may be unsolveable. Are you sure you'd like to update this challenge?",
+            title: "未设置 Flag",
+            body: "该题目没有任何 Flag，可能无法被解答。确定要更新该题目吗？",
             success: update_challenge,
           });
         } else {

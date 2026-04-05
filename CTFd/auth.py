@@ -46,7 +46,9 @@ def confirm(data=None):
             return render_template(
                 "confirm.html",
                 errors=[
-                    "Email verification is enabled but email sending isn't available. Please contact an admin to confirm your account"
+                    _l(
+                        "Email verification is enabled but email sending isn't available. Please contact an admin to confirm your account"
+                    )
                 ],
             )
 
@@ -57,7 +59,7 @@ def confirm(data=None):
         except (UserConfirmTokenInvalidException):
             return render_template(
                 "confirm.html",
-                errors=["Your confirmation link is invalid, please generate a new one"],
+                errors=[_l("Your confirmation link is invalid, please generate a new one")],
             )
 
         user = Users.query.filter_by(email=user_email).first_or_404()
@@ -109,7 +111,7 @@ def confirm(data=None):
                 name=user.name,
             )
             return render_template(
-                "confirm.html", infos=[f"Confirmation email sent to {user.email}!"]
+                "confirm.html", infos=[_l("Confirmation email sent to %(email)s!") % {"email": user.email}]
             )
         elif request.method == "GET":
             # User has been directed to the confirm page
@@ -125,7 +127,9 @@ def reset_password(data=None):
             "reset_password.html",
             errors=[
                 markup(
-                    "This CTF is not configured to send email.<br> Please contact an organizer to have your password reset."
+                    _l(
+                        "This CTF is not configured to send email.<br> Please contact an organizer to have your password reset."
+                    )
                 )
             ],
         )
@@ -136,7 +140,7 @@ def reset_password(data=None):
         except (UserResetPasswordTokenInvalidException):
             return render_template(
                 "reset_password.html",
-                errors=["Your reset link is invalid, please generate a new one"],
+                errors=[_l("Your reset link is invalid, please generate a new one")],
             )
 
         if request.method == "GET":
@@ -148,7 +152,9 @@ def reset_password(data=None):
                 return render_template(
                     "reset_password.html",
                     infos=[
-                        "Your account was registered via an authentication provider and does not have an associated password. Please login via your authentication provider."
+                        _l(
+                            "Your account was registered via an authentication provider and does not have an associated password. Please login via your authentication provider."
+                        )
                     ],
                 )
 
@@ -165,8 +171,8 @@ def reset_password(data=None):
                     "reset_password.html",
                     errors=[
                         _l(
-                            f"Password must be at least {password_min_length} characters"
-                        )
+                            "Password must be at least %(n)d characters"
+                        ) % {"n": password_min_length}
                     ],
                 )
 
@@ -346,7 +352,7 @@ def register():
             errors.append(_l("Pick a longer password"))
         if password_min_length and pass_min:
             errors.append(
-                _l(f"Password must be at least {password_min_length} characters")
+                _l("Password must be at least %(n)d characters") % {"n": password_min_length}
             )
         if pass_long:
             errors.append(_l("Pick a shorter password"))
@@ -463,7 +469,9 @@ def login():
                     return redirect(url_for("challenges.listing"))
                 else:
                     errors.append(
-                        "Preset admin user could not be created. Please contact an administrator"
+                        _l(
+                            "Preset admin user could not be created. Please contact an administrator"
+                        )
                     )
                     return render_template("login.html", errors=errors)
 
@@ -476,8 +484,10 @@ def login():
         if user:
             if user.password is None:
                 errors.append(
-                    "Your account was registered with a 3rd party authentication provider. "
-                    "Please try logging in with a configured authentication provider."
+                    _l(
+                        "Your account was registered with a 3rd party authentication provider. "
+                        "Please try logging in with a configured authentication provider."
+                    )
                 )
                 return render_template("login.html", errors=errors)
 
@@ -501,13 +511,13 @@ def login():
                     "[{date}] {ip} - submitted invalid password for {name}",
                     name=user.name,
                 )
-                errors.append("Your username or password is incorrect")
+                errors.append(_l("Your username or password is incorrect"))
                 db.session.close()
                 return render_template("login.html", errors=errors)
         else:
             # This user just doesn't exist
             log("logins", "[{date}] {ip} - submitted invalid account information")
-            errors.append("Your username or password is incorrect")
+            errors.append(_l("Your username or password is incorrect"))
             db.session.close()
             return render_template("login.html", errors=errors)
     else:
@@ -533,8 +543,9 @@ def oauth_login():
     if client_id is None:
         error_for(
             endpoint="auth.login",
-            message="OAuth Settings not configured. "
-            "Ask your CTF administrator to configure MajorLeagueCyber integration.",
+            message=_l(
+                "OAuth Settings not configured. Ask your CTF administrator to configure MajorLeagueCyber integration."
+            ),
         )
         return redirect(url_for("auth.login"))
 
@@ -617,7 +628,7 @@ def oauth_redirect():
                     log("logins", "[{date}] {ip} - Public registration via MLC blocked")
                     error_for(
                         endpoint="auth.login",
-                        message="Public registration is disabled. Please try again later.",
+                        message=_l("Public registration is disabled. Please try again later."),
                     )
                     return redirect(url_for("auth.login"))
 
@@ -665,12 +676,12 @@ def oauth_redirect():
             return redirect(url_for("challenges.listing"))
         else:
             log("logins", "[{date}] {ip} - OAuth token retrieval failure")
-            error_for(endpoint="auth.login", message="OAuth token retrieval failure.")
+            error_for(endpoint="auth.login", message=_l("OAuth token retrieval failure."))
             return redirect(url_for("auth.login"))
     else:
         log("logins", "[{date}] {ip} - Received redirect without OAuth code")
         error_for(
-            endpoint="auth.login", message="Received redirect without OAuth code."
+            endpoint="auth.login", message=_l("Received redirect without OAuth code.")
         )
         return redirect(url_for("auth.login"))
 

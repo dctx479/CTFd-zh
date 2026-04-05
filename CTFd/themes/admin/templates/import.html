@@ -3,34 +3,34 @@
 {% block content %}
 <div class="jumbotron">
 	<div class="container">
-		<h1>Import Status</h1>
+		<h1>{{ _('Import Status') }}</h1>
 	</div>
 </div>
 <div class="container">
 	<div class="row">
 		<div class="col-md-6 offset-md-3">
 			<p>
-				<b>Start Time:</b> <span id="start-time">{{ start_time }}</span>
+				<b>{{ _('Start Time:') }}</b> <span id="start-time">{{ start_time }}</span>
 			</p>
 			{% if end_time %}
 			<p>
-				<b>End Time:</b> <span id="end-time">{{ end_time }}</span>
+				<b>{{ _('End Time:') }}</b> <span id="end-time">{{ end_time }}</span>
 			</p>
 			{% endif %}
 			{% if import_error %}
 			<p>
-				<b>Import Error:</b> {{ import_error }}
+				<b>{{ _('Import Error:') }}</b> {{ import_error }}
 			</p>
 			<div class="alert alert-danger" role="alert">
-				An error occurred during the import. Please try again. 
+				{{ _('An error occurred during the import. Please try again.') }} 
 			</div>
 			{% else %}
 			<p>
-				<b>Current Status:</b> {{ import_status }}
+				<b>{{ _('Current Status:') }}</b> {{ import_status }}
 			</p>
 			<div class="alert alert-secondary" role="alert">
-				Page will redirect upon completion. Refresh page to get latest status.<br>
-				Page will automatically refresh every 5 seconds.
+				{{ _('Page will redirect upon completion. Refresh page to get latest status.') }}<br>
+				{{ _('Page will automatically refresh every 5 seconds.') }}
 			</div>
 			{% endif %}
 		</div>

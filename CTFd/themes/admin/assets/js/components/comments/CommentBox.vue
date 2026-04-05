@@ -7,7 +7,7 @@
             class="form-control mb-2"
             rows="2"
             id="comment-input"
-            placeholder="Add comment"
+            placeholder="添加评论"
             v-model.lazy="comment"
           ></textarea>
           <button
@@ -15,7 +15,7 @@
             type="submit"
             @click="submitComment()"
           >
-            Comment
+            评论
           </button>
         </div>
       </div>
@@ -46,7 +46,7 @@
       <div class="col-md-12">
         <div class="text-center">
           <small class="text-muted"
-            >Page {{ page }} of {{ total }} comments</small
+            >第 {{ page }} 页，共 {{ total }} 条评论</small
           >
         </div>
       </div>
@@ -108,7 +108,7 @@
       <div class="col-md-12">
         <div class="text-center">
           <small class="text-muted"
-            >Page {{ page }} of {{ total }} comments</small
+            >第 {{ page }} 页，共 {{ total }} 条评论</small
           >
         </div>
       </div>
@@ -187,7 +187,7 @@ export default {
       this.comment = "";
     },
     deleteComment: function (commentId) {
-      if (confirm("Are you sure you'd like to delete this comment?")) {
+      if (confirm("确定要删除这条评论吗？")) {
         helpers.comments.delete_comment(commentId).then((response) => {
           if (response.success === true) {
             for (let i = this.comments.length - 1; i >= 0; --i) {

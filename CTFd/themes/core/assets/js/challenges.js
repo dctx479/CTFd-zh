@@ -265,7 +265,7 @@ Alpine.data("Challenge", () => ({
       this.ratingValue = this.selectedRating;
       this.ratingSubmitted = true;
     } else {
-      alert("Error submitting rating");
+      alert("提交评分时出错");
     }
   },
 }));

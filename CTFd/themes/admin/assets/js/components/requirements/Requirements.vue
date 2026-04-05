@@ -38,16 +38,16 @@
 
       <div class="form-group">
         <label>
-          <b>Behavior if not unlocked</b>
+          <b>未解锁时的行为</b>
         </label>
         <select
           class="form-control custom-select"
           name="anonymize"
           v-model="selectedAnonymize"
         >
-          <option :value="false">Hidden</option>
-          <option :value="true">Anonymized</option>
-          <option value="preview">Preview</option>
+          <option :value="false">隐藏</option>
+          <option :value="true">匿名</option>
+          <option value="preview">预览</option>
         </select>
       </div>
 
@@ -56,7 +56,7 @@
           class="btn btn-success float-right"
           :disabled="!newRequirements"
         >
-          Save
+          保存
         </button>
       </div>
     </form>

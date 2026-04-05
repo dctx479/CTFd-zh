@@ -6,7 +6,7 @@
           <div class="container">
             <div class="row">
               <div class="col-md-12">
-                <h3>Create Flag</h3>
+                <h3>创建 Flag</h3>
               </div>
             </div>
           </div>
@@ -23,7 +23,7 @@
         <div class="modal-body">
           <div class="create-keys-select-div">
             <label for="create-keys-select" class="control-label">
-              Choose Flag Type
+              选择 Flag 类型
             </label>
             <select
               class="form-control custom-select"
@@ -47,7 +47,7 @@
               type="submit"
               v-if="createForm"
             >
-              Create Flag
+              创建 Flag
             </button>
           </form>
         </div>

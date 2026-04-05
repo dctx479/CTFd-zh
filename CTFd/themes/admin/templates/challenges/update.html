@@ -5,8 +5,8 @@
 	{% block name %}
 	<div class="form-group">
 		<label>
-			Name<br>
-			<small class="form-text text-muted">Challenge Name</small>
+			{{ _('Name') }}<br>
+			<small class="form-text text-muted">{{ _('Challenge Name') }}</small>
 		</label>
 		<input type="text" class="form-control chal-name" name="name" value="{{ challenge.name }}">
 	</div>
@@ -15,8 +15,8 @@
 	{% block category %}
 	<div class="form-group">
 		<label>
-			Category<br>
-			<small class="form-text text-muted">Challenge Category</small>
+			{{ _('Category') }}<br>
+			<small class="form-text text-muted">{{ _('Challenge Category') }}</small>
 		</label>
 		<input type="text" class="form-control chal-category" name="category" value="{{ challenge.category }}">
 	</div>
@@ -25,9 +25,9 @@
 	{% block message %}
 	<div class="form-group">
 		<label>
-			Message<br>
+			{{ _('Message') }}<br>
 			<small class="form-text text-muted">
-				Use this to give a brief introduction to your challenge.
+				{{ _('Use this to give a brief introduction to your challenge.') }}
 			</small>
 		</label>
 		<textarea id="desc-editor" class="form-control chal-desc-editor markdown" name="description" rows="10">{{ challenge.description }}</textarea>
@@ -37,9 +37,9 @@
 	{% block attribution %}
 	<div class="form-group">
 		<label>
-			Attribution:<br>
+			{{ _('Attribution:') }}<br>
 			<small class="form-text text-muted">
-				Attribution for your challenge <small>(supports markdown)</small>
+				{{ _('Attribution for your challenge') }} <small>({{ _('supports markdown') }})</small>
 			</small>
 		</label>
 		<input type="text" class="form-control" name="attribution" value="{{ challenge.attribution }}">
@@ -49,9 +49,9 @@
 	{% block connection_info %}
 	<div class="form-group">
 		<label>
-			Connection Info<br>
+			{{ _('Connection Info') }}<br>
 			<small class="form-text text-muted">
-				Use this to specify a link, hostname, or connection instructions for your challenge.
+				{{ _('Use this to specify a link, hostname, or connection instructions for your challenge.') }}
 			</small>
 		</label>
 		<input type="text" class="form-control chal-connection-info" name="connection_info" value="{{ challenge.connection_info | default('', true) }}">
@@ -61,9 +61,9 @@
 	{% block value %}
 	<div class="form-group">
 		<label for="value">
-			Value<br>
+			{{ _('Value') }}<br>
 			<small class="form-text text-muted">
-				This is how many points teams will receive once they solve this challenge.
+				{{ _('This is how many points teams will receive once they solve this challenge.') }}
 			</small>
 		</label>
 		<input type="number" class="form-control chal-value" name="value" value="{{ challenge.value }}" required>
@@ -73,9 +73,9 @@
 	{% block position %}
 	<div class="form-group">
 		<label for="position">
-			Position<br>
+			{{ _('Position') }}<br>
 			<small class="form-text text-muted">
-				This is used to order the challenge. Lower positions are first. Position 0 goes to the end to be sorted by challenge value.
+				{{ _('This is used to order the challenge. Lower positions are first. Position 0 goes to the end to be sorted by challenge value.') }}
 			</small>
 		</label>
 		<input type="number" class="form-control chal-position" name="position" value="{{ challenge.position }}" required>
@@ -85,21 +85,21 @@
 	{% block function %}
 	<div class="form-group">
 		<label for="function">
-			Scoring Function<br>
+			{{ _('Scoring Function') }}<br>
 			<small class="form-text text-muted">
-				<span>How the challenge value will be calculated based on the Decay value</span>
+				<span>{{ _('How the challenge value will be calculated based on the Decay value') }}</span>
 			</small>
 		</label>
 		<select name="function" class="custom-select chal-function">
-			<option value="static" {% if challenge.function == "static" %}selected{% endif %}>Static</option>
-			<option value="linear" {% if challenge.function == "linear" %}selected{% endif %}>Linear</option>
-			<option value="logarithmic" {% if challenge.function == "logarithmic" %}selected{% endif %}>Logarithmic</option>
+			<option value="static" {% if challenge.function == "static" %}selected{% endif %}>{{ _('Static') }}</option>
+			<option value="linear" {% if challenge.function == "linear" %}selected{% endif %}>{{ _('Linear') }}</option>
+			<option value="logarithmic" {% if challenge.function == "logarithmic" %}selected{% endif %}>{{ _('Logarithmic') }}</option>
 		</select>
 		<small class="form-text text-muted">
 			<ul>
-				<li>Static: Challenge <code>Value</code> is awarded as-is</li>
-				<li>Linear: Calculated as <code>Initial - (Decay * SolveCount)</code></li>
-				<li>Logarithmic: Calculated as <code>(((Minimum - Initial) / (Decay^2)) * (SolveCount^2)) + Initial</code></li>
+				<li>{{ _('Static: Challenge') }} <code>{{ _('Value') }}</code> {{ _('is awarded as-is') }}</li>
+				<li>{{ _('Linear: Calculated as') }} <code>Initial - (Decay * SolveCount)</code></li>
+				<li>{{ _('Logarithmic: Calculated as') }} <code>(((Minimum - Initial) / (Decay^2)) * (SolveCount^2)) + Initial</code></li>
 			</ul>
 		</small>
 	</div>
@@ -107,9 +107,9 @@
 
 	{% block initial %}
 	<div class="form-group">
-		<label for="initial">Initial Value<br>
+		<label for="initial">{{ _('Initial Value') }}<br>
 			<small class="form-text text-muted">
-				This is how many points the challenge was worth initially.
+				{{ _('This is how many points the challenge was worth initially.') }}
 			</small>
 		</label>
 		<input type="number" class="form-control chal-initial" name="initial" value="{{ challenge.initial }}" required>
@@ -118,12 +118,12 @@
 
 	{% block decay %}
 	<div class="form-group">
-		<label for="decay">Decay<br>
+		<label for="decay">{{ _('Decay') }}<br>
 			<small class="form-text text-muted">
-				<span>The decay value is used differently depending on the above Decay Function</span>
+				<span>{{ _('The decay value is used differently depending on the above Decay Function') }}</span>
 				<ul>
-					<li>Linear: The amount of points deducted per solve. Equal deduction per solve.</li>
-					<li>Logarithmic: The amount of solves before the challenge reaches its minimum value. Earlier solves will lose less points. Later solves will lose more points</li>
+					<li>{{ _('Linear: The amount of points deducted per solve. Equal deduction per solve.') }}</li>
+					<li>{{ _('Logarithmic: The amount of solves before the challenge reaches its minimum value. Earlier solves will lose less points. Later solves will lose more points') }}</li>
 				</ul>
 			</small>
 		</label>
@@ -133,9 +133,9 @@
 
 	{% block minimum %}
 	<div class="form-group">
-		<label for="minimum">Minimum Value<br>
+		<label for="minimum">{{ _('Minimum Value') }}<br>
 			<small class="form-text text-muted">
-				This is the lowest that the challenge can be worth
+				{{ _('This is the lowest that the challenge can be worth') }}
 			</small>
 		</label>
 		<input type="number" class="form-control chal-minimum" name="minimum" value="{{ challenge.minimum }}" required>
@@ -145,14 +145,14 @@
 	{% block logic %}
 	<div class="form-group">
 		<label>
-			Logic<br>
-			<small class="form-text text-muted">Determines how this challenge is solved</small>
+			{{ _('Logic') }}<br>
+			<small class="form-text text-muted">{{ _('Determines how this challenge is solved') }}</small>
 		</label>
 
 		<select class="form-control custom-select" name="logic">
-			<option value="any" {% if challenge.logic == "any" or not challenge.logic %}selected{% endif %}>Require Any Flag</option>
-			<option value="all" {% if challenge.logic == "all" %}selected{% endif %}>Require All Flags</option>
-			<option value="team" {% if challenge.logic == "team" %}selected{% endif %}>Require Any Flags by All Team Members</option>
+			<option value="any" {% if challenge.logic == "any" or not challenge.logic %}selected{% endif %}>{{ _('Require Any Flag') }}</option>
+			<option value="all" {% if challenge.logic == "all" %}selected{% endif %}>{{ _('Require All Flags') }}</option>
+			<option value="team" {% if challenge.logic == "team" %}selected{% endif %}>{{ _('Require Any Flags by All Team Members') }}</option>
 		</select>
 	</div>
 	{% endblock %}
@@ -160,8 +160,8 @@
 	{% block max_attempts %}
 	<div class="form-group">
 		<label>
-			Max Attempts<br>
-			<small class="form-text text-muted">Maximum amount of attempts users receive. Leave at 0 for unlimited.</small>
+			{{ _('Max Attempts') }}<br>
+			<small class="form-text text-muted">{{ _('Maximum amount of attempts users receive. Leave at 0 for unlimited.') }}</small>
 		</label>
 
 		<input type="number" class="form-control chal-attempts" name="max_attempts" value="{{ challenge.max_attempts }}">
@@ -171,13 +171,13 @@
 	{% block state %}
 	<div class="form-group">
 		<label>
-			State<br>
-			<small class="form-text text-muted">Changes the state of the challenge (e.g. visible, hidden)</small>
+			{{ _('State') }}<br>
+			<small class="form-text text-muted">{{ _('Changes the state of the challenge (e.g. visible, hidden)') }}</small>
 		</label>
 
 		<select class="form-control custom-select" name="state">
-			<option value="visible" {% if challenge.state == "visible" %}selected{% endif %}>Visible</option>
-			<option value="hidden" {% if challenge.state == "hidden" %}selected{% endif %}>Hidden</option>
+			<option value="visible" {% if challenge.state == "visible" %}selected{% endif %}>{{ _('Visible') }}</option>
+			<option value="hidden" {% if challenge.state == "hidden" %}selected{% endif %}>{{ _('Hidden') }}</option>
 		</select>
 	</div>
 	{% endblock %}
@@ -185,7 +185,7 @@
 	{% block submit %}
 	<div>
 		<button class="btn btn-success btn-outlined float-right" type="submit">
-			Update
+			{{ _('Update') }}
 		</button>
 	</div>
 	{% endblock %}

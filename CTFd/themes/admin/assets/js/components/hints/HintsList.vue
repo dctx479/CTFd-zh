@@ -23,10 +23,10 @@
       <thead>
         <tr>
           <td class="text-center"><b>ID</b></td>
-          <td class="text-center"><b>Title</b></td>
-          <td class="text-center"><b>Hint</b></td>
-          <td class="text-center"><b>Cost</b></td>
-          <td class="text-center"><b>Settings</b></td>
+          <td class="text-center"><b>标题</b></td>
+          <td class="text-center"><b>提示内容</b></td>
+          <td class="text-center"><b>费用</b></td>
+          <td class="text-center"><b>操作</b></td>
         </tr>
       </thead>
       <tbody>
@@ -54,7 +54,7 @@
     </table>
     <div class="col-md-12">
       <button class="btn btn-success float-right" @click="addHint">
-        Create Hint
+        创建提示
       </button>
     </div>
   </div>
@@ -125,15 +125,15 @@ export default {
           }
         } else {
           alert(
-            "An error occurred while updating this hint. Please try again.",
+            "更新提示时发生错误，请重试。",
           );
         }
       });
     },
     deleteHint: function (hintId) {
       ezQuery({
-        title: "Delete Hint",
-        body: "Are you sure you want to delete this hint?",
+        title: "删除提示",
+        body: "确定要删除这个提示吗？",
         success: () => {
           CTFd.fetch(`/api/v1/hints/${hintId}`, {
             method: "DELETE",

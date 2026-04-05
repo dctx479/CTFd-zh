@@ -4,7 +4,7 @@
       <div class="col-md-12">
         <!-- Loading State -->
         <div v-if="loading" class="text-center">
-          <i class="fas fa-circle-notch fa-spin spinner"></i> Loading ratings...
+          <i class="fas fa-circle-notch fa-spin spinner"></i> 加载评分中...
         </div>
 
         <!-- Error State -->
@@ -18,7 +18,7 @@
           class="text-center text-muted py-4"
         >
           <i class="fa fa-star fa-2x mb-3"></i>
-          <p>No ratings yet</p>
+          <p>暂无评分</p>
         </div>
 
         <!-- Ratings Content -->
@@ -44,7 +44,7 @@
               </div>
               <div class="col-md-4 text-center">
                 <h4>
-                  <strong> Total: {{ meta.summary.count }} </strong>
+                  <strong> 总计：{{ meta.summary.count }} </strong>
                 </h4>
               </div>
             </div>
@@ -91,13 +91,13 @@
               class="btn btn-secondary"
               :disabled="loading"
             >
-              <i class="fa fa-arrow-left"></i> Previous
+              <i class="fa fa-arrow-left"></i> 上一页
             </button>
             <div v-else></div>
 
             <!-- Page info -->
             <span class="text-muted">
-              Page {{ meta.pagination.page }} of {{ meta.pagination.pages }}
+            第 {{ meta.pagination.page }} 页，共 {{ meta.pagination.pages }} 页
             </span>
 
             <!-- Next button -->
@@ -107,7 +107,7 @@
               class="btn btn-secondary"
               :disabled="loading"
             >
-              Next <i class="fa fa-arrow-right"></i>
+              下一页 <i class="fa fa-arrow-right"></i>
             </button>
             <div v-else></div>
           </div>
@@ -184,12 +184,12 @@ export default {
           this.ratings = data.data;
           this.meta = data.meta;
         } else {
-          this.error = "Failed to load ratings";
+          this.error = "加载评分失败";
           console.error("API Error:", data);
         }
       } catch (err) {
         console.error("Error loading ratings:", err);
-        this.error = "Error loading ratings";
+        this.error = "加载评分时出错";
       } finally {
         this.loading = false;
       }

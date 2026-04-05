@@ -1,11 +1,11 @@
 <template>
   <div>
     <div class="form-group">
-      <label>Search Users</label>
+      <label>搜索用户</label>
       <input
         type="text"
         class="form-control"
-        placeholder="Search for users"
+        placeholder="搜索用户"
         v-model="searchedName"
         @keyup.down="moveCursor('down')"
         @keyup.up="moveCursor('up')"
@@ -31,7 +31,7 @@
           awaitingSearch == false
         "
       >
-        <span class="text-muted"> No users found </span>
+        <span class="text-muted"> 未找到用户 </span>
       </div>
       <ul class="list-group">
         <li
@@ -52,7 +52,7 @@
               'text-muted': idx !== selectedResultIdx,
             }"
           >
-            already in a team
+            已在其他队伍中
           </small>
         </li>
       </ul>
@@ -62,7 +62,7 @@
         class="btn btn-success d-inline-block float-right"
         @click="addUsers()"
       >
-        Add Users
+        添加用户
       </button>
     </div>
   </div>
@@ -192,8 +192,8 @@ export default {
       if (usersInTeams.length) {
         let users = htmlEntities(usersInTeams.join(", "));
         ezQuery({
-          title: "Confirm Team Removal",
-          body: `The following users are currently in teams:<br><br> ${users} <br><br>Are you sure you want to remove them from their current teams and add them to this one? <br><br>All of their challenge solves, attempts, awards, and unlocked hints will also be deleted!`,
+          title: "确认移出队伍",
+          body: `以下用户当前已在其他队伍中：<br><br> ${users} <br><br>确定要将他们从当前队伍移除并加入此队伍吗？<br><br>他们的所有解题记录、提交、奖励和已解锁提示也将被删除！`,
           success: () => {
             this.handleRemoveUsersFromTeams().then((_resps) => {
               this.handleAddUsersRequest().then((_resps) => {

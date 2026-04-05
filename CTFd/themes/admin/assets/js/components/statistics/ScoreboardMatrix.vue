@@ -19,7 +19,7 @@
                 aria-expanded="false"
                 aria-controls="collapseFilters"
               >
-                <i class="fas fa-filter mr-2"></i> Filter Matrix Data
+                <i class="fas fa-filter mr-2"></i> 过滤矩阵数据
               </button>
             </h2>
           </div>
@@ -33,13 +33,13 @@
               <div
                 class="d-flex justify-content-between align-items-center mb-3"
               >
-                <h5 class="mb-0">Filters</h5>
+                <h5 class="mb-0">筛选条件</h5>
                 <div>
                   <button
                     class="btn btn-secondary btn-sm"
                     @click="resetFilters"
                   >
-                    Reset All
+                    重置全部
                   </button>
                 </div>
               </div>
@@ -48,15 +48,15 @@
                 <div class="col-md-3 mb-3 mb-md-0">
                   <div class="card p-2 shadow-sm filter-col">
                     <h6>
-                      Filter {{ userMode === "teams" ? "Teams" : "Users" }}
+                      筛选 {{ userMode === "teams" ? "队伍" : "用户" }}
                     </h6>
                     <input
                       type="text"
                       class="form-control form-control-sm mb-2"
                       v-model="userSearch"
                       :placeholder="
-                        'Search ' +
-                        (userMode === 'teams' ? 'teams' : 'users') +
+                        '搜索' +
+                        (userMode === 'teams' ? '队伍' : '用户') +
                         '...'
                       "
                     />
@@ -86,10 +86,10 @@
                     <div class="mt-1">
                       <small>
                         <a href="#" @click.prevent="selectAllUsers"
-                          >Select All</a
+                          >全选</a
                         >
                         /
-                        <a href="#" @click.prevent="deselectAllUsers">None</a>
+                        <a href="#" @click.prevent="deselectAllUsers">全不选</a>
                       </small>
                     </div>
                   </div>
@@ -97,12 +97,12 @@
 
                 <div class="col-md-3 mb-3 mb-md-0">
                   <div class="card p-2 shadow-sm filter-col">
-                    <h6>Filter Categories</h6>
+                    <h6>筛选分类</h6>
                     <input
                       type="text"
                       class="form-control form-control-sm mb-2"
                       v-model="categorySearch"
-                      placeholder="Search categories..."
+                      placeholder="搜索分类..."
                     />
                     <div class="filter-list">
                       <div
@@ -130,11 +130,11 @@
                     <div class="mt-1">
                       <small>
                         <a href="#" @click.prevent="selectAllCategories"
-                          >Select All</a
+                          >全选</a
                         >
                         /
                         <a href="#" @click.prevent="deselectAllCategories"
-                          >None</a
+                          >全不选</a
                         >
                       </small>
                     </div>
@@ -143,29 +143,29 @@
 
                 <div class="col-md-3 mb-3 mb-md-0">
                   <div class="card p-2 shadow-sm filter-col">
-                    <h6>Filter Challenges</h6>
+                    <h6>筛选题目</h6>
                     <input
                       type="text"
                       class="form-control form-control-sm mb-2"
                       v-model="challengeSearch"
-                      placeholder="Search challenges..."
+                      placeholder="搜索题目..."
                     />
-                    <label class="mb-0">Sort By</label>
+                    <label class="mb-0">排序方式</label>
                     <select
                       class="form-control form-control-sm mb-2"
                       v-model="challengeSort"
                     >
-                      <option value="position">Position (Default)</option>
-                      <option value="id">ID (Ascending)</option>
-                      <option value="id-desc">ID (Descending)</option>
+                      <option value="position">排名顺序（默认）</option>
+                      <option value="id">ID（升序）</option>
+                      <option value="id-desc">ID（降序）</option>
                       <option value="name-asc">
-                        Alphabetical (Ascending: A-Z)
+                        字母顺序（升序：A-Z）
                       </option>
                       <option value="name-desc">
-                        Alphabetical (Descending: Z-A)
+                        字母顺序（降序：Z-A）
                       </option>
-                      <option value="value-asc">Points (Ascending)</option>
-                      <option value="value-desc">Points (Descending)</option>
+                      <option value="value-asc">分值（升序）</option>
+                      <option value="value-desc">分值（降序）</option>
                     </select>
                     <div class="filter-list">
                       <div
@@ -193,11 +193,11 @@
                     <div class="mt-1">
                       <small>
                         <a href="#" @click.prevent="selectAllChallenges"
-                          >Select All</a
+                          >全选</a
                         >
                         /
                         <a href="#" @click.prevent="deselectAllChallenges"
-                          >None</a
+                          >全不选</a
                         >
                       </small>
                     </div>
@@ -206,12 +206,12 @@
 
                 <div class="col-md-3">
                   <div class="card p-2 shadow-sm filter-col">
-                    <h6>Filter Brackets</h6>
+                    <h6>筛选分组</h6>
                     <input
                       type="text"
                       class="form-control form-control-sm mb-2"
                       v-model="bracketSearch"
-                      placeholder="Search brackets..."
+                      placeholder="搜索分组..."
                     />
                     <div class="filter-list">
                       <div
@@ -239,11 +239,11 @@
                     <div class="mt-1">
                       <small>
                         <a href="#" @click.prevent="selectAllBrackets"
-                          >Select All</a
+                          >全选</a
                         >
                         /
                         <a href="#" @click.prevent="deselectAllBrackets"
-                          >None</a
+                          >全不选</a
                         >
                       </small>
                     </div>
@@ -262,21 +262,21 @@
           style="width: 15px; height: 15px; background-color: #28a745"
           class="mr-1 border"
         ></div>
-        <small>Solved</small>
+        <small>已解答</small>
       </div>
       <div class="d-flex align-items-center mr-3">
         <div
           style="width: 15px; height: 15px; background-color: #ffc107"
           class="mr-1 border"
         ></div>
-        <small>Attempted</small>
+        <small>已尝试</small>
       </div>
       <div class="d-flex align-items-center">
         <div
           style="width: 15px; height: 15px; background-color: #17a2b8"
           class="mr-1 border"
         ></div>
-        <small>Opened</small>
+        <small>已打开</small>
       </div>
     </div>
 
@@ -284,11 +284,11 @@
       <table class="table table-striped table-sm mb-0" id="matrix-scoreboard">
         <thead class="thead-dark">
           <tr>
-            <th class="sticky-header sticky-col-place text-center">Place</th>
+            <th class="sticky-header sticky-col-place text-center">排名</th>
             <th class="sticky-header sticky-col-name text-center">
-              {{ userMode === "teams" ? "Team" : "User" }}
+              {{ userMode === "teams" ? "队伍" : "用户" }}
             </th>
-            <th class="sticky-header sticky-col-score text-center">Score</th>
+            <th class="sticky-header sticky-col-score text-center">分数</th>
             <th
               v-for="challenge in displayChallenges"
               :key="challenge.id"

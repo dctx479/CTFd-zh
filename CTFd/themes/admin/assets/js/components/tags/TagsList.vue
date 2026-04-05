@@ -13,9 +13,9 @@
 
     <div class="form-group">
       <label
-        >Tag
+        >标签
         <br />
-        <small class="text-muted">Type tag and press Enter</small>
+        <small class="text-muted">输入标签后按 Enter 添加</small>
       </label>
       <input
         id="tags-add-input"

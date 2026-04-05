@@ -3,10 +3,10 @@
     <form @submit.prevent="updateNext">
       <div class="form-group">
         <label>
-          Next Challenge
+          下一题
           <br />
           <small class="text-muted"
-            >Challenge to recommend after solving this challenge</small
+            >解答本题后推荐的下一道题目</small
           >
         </label>
         <select class="form-control custom-select" v-model="selected_id">
@@ -25,7 +25,7 @@
           class="btn btn-success float-right"
           :disabled="!updateAvailable"
         >
-          Save
+          保存
         </button>
       </div>
     </form>

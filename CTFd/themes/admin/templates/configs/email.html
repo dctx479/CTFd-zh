@@ -14,7 +14,7 @@
 
 	{% set successful_registration_email_subject = successful_registration_email_subject if successful_registration_email_subject is defined and successful_registration_email_subject != None else formcls.successful_registration_email_subject.kwargs['default'] %}
 	{% set successful_registration_email_body = successful_registration_email_body if successful_registration_email_body is defined and successful_registration_email_body != None else formcls.successful_registration_email_body.kwargs['default'] %}
-	
+
 	{% set verification_email_subject = verification_email_subject if verification_email_subject is defined and verification_email_subject != None else formcls.verification_email_subject.kwargs['default'] %}
 	{% set verification_email_body = verification_email_body if verification_email_body is defined and verification_email_body != None else formcls.verification_email_body.kwargs['default'] %}
 
@@ -28,9 +28,9 @@
 	{% set password_change_alert_body = password_change_alert_body if password_change_alert_body is defined and password_change_alert_body != None else formcls.password_change_alert_body.kwargs['default'] %}
 
 	{% with form = Forms.config.EmailSettingsForm(
-		mailfrom_addr=mailfrom_addr, 
-		mail_server=mail_server, 
-		mail_port=mail_port, 
+		mailfrom_addr=mailfrom_addr,
+		mail_server=mail_server,
+		mail_port=mail_port,
 		mail_useauth=mail_useauth,
 		mail_ssl=mail_ssl,
 		mail_tls=mail_tls,
@@ -48,31 +48,31 @@
 		password_change_alert_body=password_change_alert_body,
 	) %}
 	<form method="POST" autocomplete="off" class="w-100">
-		<h5>Email notifications</h5>
+		<h5>{{ _('Email notifications') }}</h5>
 		<small class="form-text text-muted">
-			Customize the emails that CTFd sends your users with custom content using <a href="https://docs.ctfd.io/docs/settings/emails/#email-content" target="_blank">predefined variables</a>, mail servers, and addresses.
+			{{ _('Customize the emails that CTFd sends your users with custom content using') }} <a href="https://docs.ctfd.io/docs/settings/emails/#email-content" target="_blank">{{ _('predefined variables') }}</a>{{ _(', mail servers, and addresses.') }}
 		</small>
 		<ul class="nav nav-tabs mt-3" role="tablist">
 			<li class="nav-item active">
 				<a class="nav-link active" href="#email-server-tab" role="tab" data-toggle="tab">
-					Mail Server
+					{{ _('Mail Server') }}
 				</a>
 			</li>
 			<li class="nav-item">
 				<a class="nav-link" href="#registration-email-tab" role="tab" data-toggle="tab">
-					Registration
+					{{ _('Registration') }}
 				</a>
 			</li>
 			<li class="nav-item">
 				<a class="nav-link" href="#verification-email-tab" role="tab" data-toggle="tab">
-					Verification
+					{{ _('Verification') }}
 				</a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="#account-details-email-tab" role="tab" data-toggle="tab">Account Details</a>
+				<a class="nav-link" href="#account-details-email-tab" role="tab" data-toggle="tab">{{ _('Account Details') }}</a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="#password-reset-email-tab" role="tab" data-toggle="tab">Password Reset</a>
+				<a class="nav-link" href="#password-reset-email-tab" role="tab" data-toggle="tab">{{ _('Password Reset') }}</a>
 			</li>
 		</ul>
 
@@ -111,7 +111,7 @@
 						{{ form.mail_username.label() }}
 						{% if mail_username is defined and mail_username != None %}
 							<label>
-								<sup class="form-text text-muted">(A mail server username is currently set)</sup>
+								<sup class="form-text text-muted">{{ _('(A mail server username is currently set)') }}</sup>
 							</label>
 						{% endif %}
 						{{ form.mail_username(class="form-control", autocomplete="off") }}
@@ -123,7 +123,7 @@
 						{{ form.mail_password.label() }}
 						{% if mail_password is defined and mail_password != None %}
 							<label>
-								<sup class="form-text text-muted">(A mail server password is currently set)</sup>
+								<sup class="form-text text-muted">{{ _('(A mail server password is currently set)') }}</sup>
 							</label>
 						{% endif %}
 						{{ form.mail_password(class="form-control", autocomplete="off") }}
@@ -131,7 +131,7 @@
 							{{ form.mail_password.description }}
 						</small>
 					</div>
-					<sup class="float-right">Uncheck setting and update to remove username and password</sup>
+					<sup class="float-right">{{ _('Uncheck setting and update to remove username and password') }}</sup>
 					<br>
 				</div>
 				<div class="form-check">
@@ -144,7 +144,7 @@
 				</div>
 				<br>
 				<div class="alert alert-warning" role="alert">
-					Mailgun integration is deprecated! Please see your Mailgun account for SMTP credentials.
+					{{ _('Mailgun integration is deprecated! Please see your Mailgun account for SMTP credentials.') }}
 				</div>
 				<div class="form-group">
 					{{ form.mailgun_base_url.label() }}
@@ -164,9 +164,9 @@
 			<div role="tabpanel" class="tab-pane" id="registration-email-tab">
 				<div class="form-group">
 					<label class="pt-3">
-						Account Registration<br>
+						{{ _('Account Registration') }}<br>
 						<small class="form-text text-muted">
-							Email sent to users after they've finished registering
+							{{ _("Email sent to users after they've finished registering") }}
 						</small>
 					</label>
 					<div>
@@ -187,9 +187,9 @@
 			<div role="tabpanel" class="tab-pane" id="verification-email-tab">
 				<div class="form-group">
 					<label class="pt-3">
-						Account Verification<br>
+						{{ _('Account Verification') }}<br>
 						<small class="form-text text-muted">
-							Email sent to users to confirm their account at the address they provided during registration. You can require email verification in the <a href="#accounts">Accounts settings</a>.
+							{{ _('Email sent to users to confirm their account at the address they provided during registration. You can require email verification in the') }} <a href="#accounts">{{ _('Accounts settings') }}</a>.
 						</small>
 					</label>
 					<div>
@@ -210,9 +210,9 @@
 			<div role="tabpanel" class="tab-pane" id="account-details-email-tab">
 				<div class="form-group">
 					<label class="pt-3">
-						New Account Details<br>
+						{{ _('New Account Details') }}<br>
 						<small class="form-text text-muted">
-							Email sent to new users <i>(manually created by an admin)</i> with their initial account details
+							{{ _('Email sent to new users') }} <i>{{ _('(manually created by an admin)') }}</i> {{ _('with their initial account details') }}
 						</small>
 					</label>
 					<div>
@@ -233,9 +233,9 @@
 			<div role="tabpanel" class="tab-pane" id="password-reset-email-tab">
 				<div class="form-group">
 					<label class="pt-3">
-						Password Reset Request<br>
+						{{ _('Password Reset Request') }}<br>
 						<small class="form-text text-muted">
-							Email sent whent a user requests a password reset
+							{{ _('Email sent when a user requests a password reset') }}
 						</small>
 					</label>
 					<div>
@@ -254,9 +254,9 @@
 
 				<div class="form-group">
 					<label class="pt-3">
-						Password Reset Confirmation<br>
+						{{ _('Password Reset Confirmation') }}<br>
 						<small class="form-text text-muted">
-							Email sent whent a user successfully resets their password
+							{{ _('Email sent when a user successfully resets their password') }}
 						</small>
 					</label>
 					<div>

@@ -49,17 +49,17 @@ function submit_form() {
         }
 
         ezAlert({
-          title: "Error",
+          title: "错误",
           body: body,
-          button: "OK",
+          button: "确定",
         });
         return;
       }
 
       if (method === "PATCH" && response.success) {
         ezToast({
-          title: "Saved",
-          body: "Your changes have been saved",
+          title: "已保存",
+          body: "您的更改已成功保存",
         });
       } else {
         window.location =

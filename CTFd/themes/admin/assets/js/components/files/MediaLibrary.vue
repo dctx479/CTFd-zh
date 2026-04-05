@@ -6,7 +6,7 @@
           <div class="container">
             <div class="row">
               <div class="col-md-12">
-                <h3 class="text-center">Media Library</h3>
+                <h3 class="text-center">媒体库</h3>
               </div>
             </div>
           </div>
@@ -47,7 +47,7 @@
                   </div>
                 </div>
                 <div class="col-md-6" id="media-library-details">
-                  <h4 class="text-center">Media Details</h4>
+                  <h4 class="text-center">媒体详情</h4>
                   <div id="media-item">
                     <div class="text-center" id="media-icon">
                       <div v-if="this.selectedFile">
@@ -90,7 +90,7 @@
 
                     <div class="form-group">
                       <div v-if="this.selectedFile">
-                        Link:
+                        链接：
                         <input
                           class="form-control"
                           type="text"
@@ -100,7 +100,7 @@
                         />
                       </div>
                       <div v-else>
-                        Link:
+                        链接：
                         <input
                           class="form-control"
                           type="text"
@@ -119,9 +119,9 @@
                             id="media-insert"
                             data-toggle="tooltip"
                             data-placement="top"
-                            title="Insert link into editor"
+                            title="插入链接到编辑器"
                           >
-                            Insert
+                            插入
                           </button>
                         </div>
                         <div class="col-md-3">
@@ -131,7 +131,7 @@
                             id="media-download"
                             data-toggle="tooltip"
                             data-placement="top"
-                            title="Download file"
+                            title="下载文件"
                           >
                             <i class="fas fa-download"></i>
                           </button>
@@ -143,7 +143,7 @@
                             id="media-delete"
                             data-toggle="tooltip"
                             data-placement="top"
-                            title="Delete file"
+                            title="删除文件"
                           >
                             <i class="far fa-trash-alt"></i>
                           </button>
@@ -160,7 +160,7 @@
             <div class="form-row pt-3">
               <div class="col">
                 <div class="form-group">
-                  <label for="media-files">Upload Files</label>
+                  <label for="media-files">上传文件</label>
                   <input
                     type="file"
                     name="file"
@@ -169,23 +169,22 @@
                     multiple
                   />
                   <sub class="help-block">
-                    Attach multiple files using Control+Click or Cmd+Click.
+                    按住 Ctrl+点击 或 Cmd+点击 可选择多个文件。
                   </sub>
                 </div>
               </div>
               <div class="col">
                 <div class="form-group">
-                  <label>Upload File Location</label>
+                  <label>上传文件位置</label>
                   <input
                     class="form-control"
                     type="text"
                     name="location"
-                    placeholder="Location"
+                    placeholder="位置"
                   />
                   <sub class="help-block">
-                    Route where file will be accessible (if not provided a
-                    random folder will be used). <br />
-                    Provide as <code>directory/filename.ext</code>
+                    文件可访问的路径（若不填写则使用随机文件夹）。<br />
+                    格式：<code>目录/文件名.扩展名</code>
                   </sub>
                 </div>
               </div>
@@ -200,7 +199,7 @@
               type="submit"
               class="btn btn-primary media-upload-button"
             >
-              Upload
+              上传
             </button>
           </div>
         </div>
@@ -265,7 +264,7 @@ export default {
     deleteSelectedFile: function () {
       const file_id = this.selectedFile.id;
 
-      if (confirm("Are you sure you want to delete this file?")) {
+      if (confirm("确定要删除这个文件吗？")) {
         CTFd.fetch("/api/v1/files/" + file_id, {
           method: "DELETE",
         }).then((response) => {

@@ -31,10 +31,8 @@
 				{{ form.score_visibility.description }}
 			</small>
 			<small class="form-text text-muted py-2">
-				Score Visibility is a subset of Account Visibility. 
-				This means that if accounts are visible to a user then score visibility will control whether they can see the score of that user. 
-				If accounts are not visibile then score visibility has no effect.
-			</small>
+			{{ _('Score Visibility is a subset of Account Visibility. This means that if accounts are visible to a user then score visibility will control whether they can see the score of that user. If accounts are not visible then score visibility has no effect.') }}
+		</small>
 		</div>
 
 		<div class="form-group">
@@ -45,7 +43,7 @@
 			</small>
 		</div>
 
-		<button type="submit" class="btn btn-md btn-primary float-right">Update</button>
+		<button type="submit" class="btn btn-md btn-primary float-right">{{ _('Update') }}</button>
 	</form>
 	{% endwith %}
 </div>

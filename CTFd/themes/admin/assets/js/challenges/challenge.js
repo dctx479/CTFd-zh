@@ -160,8 +160,8 @@ $(() => {
 
   $(".delete-challenge").click(function (_event) {
     ezQuery({
-      title: "Delete Challenge",
-      body: "Are you sure you want to delete {0}".format(
+      title: "删除题目",
+      body: "确定要删除 {0} 吗？".format(
         "<strong>" + htmlEntities(window.CHALLENGE_NAME) + "</strong>",
       ),
       success: function () {
@@ -191,8 +191,8 @@ $(() => {
     }).then(function (data) {
       if (data.success) {
         ezToast({
-          title: "Success",
-          body: "Your challenge has been updated!",
+          title: "成功",
+          body: "题目已更新！",
         });
       }
     });

@@ -14,8 +14,8 @@ function deleteCorrectSubmission(_event) {
   const row = $(this).parent().parent();
 
   ezQuery({
-    title: "Delete Submission",
-    body: "Are you sure you want to delete correct submission from {0} for challenge {1}".format(
+    title: "删除提交",
+    body: "确定要删除来自 {0} 对题目 {1} 的正确提交吗？".format(
       "<strong>" + htmlEntities(team_name) + "</strong>",
       "<strong>" + htmlEntities(chal_name) + "</strong>",
     ),
@@ -38,8 +38,8 @@ function deleteSelectedSubmissions(_event) {
   let target = submissionIDs.length === 1 ? "submission" : "submissions";
 
   ezQuery({
-    title: "Delete Submissions",
-    body: `Are you sure you want to delete ${submissionIDs.length} ${target}?`,
+    title: "删除提交",
+    body: `确定要删除 ${submissionIDs.length} 个提交吗？`,
     success: function () {
       const reqs = [];
       for (var subId of submissionIDs) {
@@ -59,8 +59,8 @@ function correctSubmissions(_event) {
   let target = submissionIDs.length === 1 ? "submission" : "submissions";
 
   ezQuery({
-    title: "Correct Submissions",
-    body: `Are you sure you want to mark ${submissionIDs.length} ${target} correct?`,
+    title: "标记正确",
+    body: `确定要将 ${submissionIDs.length} 个提交标记为正确吗？`,
     success: function () {
       const reqs = [];
       for (var subId of submissionIDs) {
@@ -116,7 +116,7 @@ function copyFlag(event) {
   navigator.clipboard.writeText(text);
 
   $(event.currentTarget).tooltip({
-    title: "Copied!",
+    title: "已复制！",
     trigger: "manual",
   });
   $(event.currentTarget).tooltip("show");

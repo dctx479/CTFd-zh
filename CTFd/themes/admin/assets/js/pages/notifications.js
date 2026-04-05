@@ -26,9 +26,9 @@ function submit(event) {
     }, 1000);
     if (!response.success) {
       ezAlert({
-        title: "Error",
-        body: "Could not send notification. Please try again.",
-        button: "OK",
+        title: "错误",
+        body: "无法发送通知，请重试。",
+        button: "确定",
       });
     }
 
@@ -51,7 +51,7 @@ function deleteNotification(event) {
   const $elem = $(this);
   const id = $elem.data("notif-id");
 
-  if (confirm("Are you sure you want to delete this notification?")) {
+  if (confirm("确定要删除这条通知吗？")) {
     CTFd.api.delete_notification({ notificationId: id }).then((response) => {
       if (response.success) {
         $elem.parent().remove();

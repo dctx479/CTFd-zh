@@ -10,8 +10,8 @@ function deleteSelectedUsers(_event) {
   let target = pageIDs.length === 1 ? "page" : "pages";
 
   ezQuery({
-    title: "Delete Pages",
-    body: `Are you sure you want to delete ${pageIDs.length} ${target}?`,
+    title: "删除页面",
+    body: `确定要删除 ${pageIDs.length} 个页面吗？`,
     success: function () {
       const reqs = [];
       for (var pageID of pageIDs) {

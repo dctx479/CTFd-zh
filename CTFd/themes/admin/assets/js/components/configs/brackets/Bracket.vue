@@ -14,36 +14,35 @@
     <div class="row">
       <div class="col-md-9">
         <div class="form-group">
-          <label>Bracket Name</label>
+          <label>分组名称</label>
           <input type="text" class="form-control" v-model.lazy="bracket.name" />
           <small class="form-text text-muted">
-            Bracket name (e.g. "Students", "Interns", "Engineers")
+            分组名称（例如："学生"、"实习生"、"工程师"）
           </small>
         </div>
       </div>
 
       <div class="col-md-12">
         <div class="form-group">
-          <label>Bracket Description</label>
+          <label>分组描述</label>
           <input
             type="text"
             class="form-control"
             v-model.lazy="bracket.description"
           />
-          <small class="form-text text-muted">Bracket Description</small>
+          <small class="form-text text-muted">分组描述</small>
         </div>
       </div>
 
       <div class="col-md-12">
-        <label>Bracket Type</label>
+        <label>分组类型</label>
         <select class="custom-select" v-model.lazy="bracket.type">
           <option></option>
-          <option value="users">Users</option>
-          <option value="teams">Teams</option>
+          <option value="users">用户</option>
+          <option value="teams">队伍</option>
         </select>
         <small class="form-text text-muted">
-          If you are using Team Mode and would like the bracket to apply to
-          entire teams instead of individuals, select Teams.
+          如果使用队伍模式且希望分组应用于整个队伍而非个人，请选择"队伍"。
         </small>
       </div>
     </div>
@@ -56,7 +55,7 @@
             type="button"
             @click="saveBracket()"
           >
-            Save
+            保存
           </button>
         </div>
       </div>
@@ -92,11 +91,11 @@ export default {
       if (this.persisted()) {
         url = `/api/v1/brackets/${this.bracket.id}`;
         method = "PATCH";
-        message = "Bracket has been updated!";
+        message = "分组已更新！";
       } else {
         url = `/api/v1/brackets`;
         method = "POST";
-        message = "Bracket has been created!";
+        message = "分组已创建！";
       }
       CTFd.fetch(url, {
         method: method,
@@ -114,7 +113,7 @@ export default {
           if (response.success === true) {
             this.bracket = response.data;
             ezToast({
-              title: "Success",
+              title: "成功",
               body: message,
               delay: 1000,
             });
@@ -122,7 +121,7 @@ export default {
         });
     },
     deleteBracket: function () {
-      if (confirm("Are you sure you'd like to delete this bracket?")) {
+      if (confirm("确定要删除这个分组吗？")) {
         if (this.persisted()) {
           CTFd.fetch(`/api/v1/brackets/${this.bracket.id}`, {
             method: "DELETE",

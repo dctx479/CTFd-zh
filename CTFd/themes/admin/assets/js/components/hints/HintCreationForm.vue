@@ -6,7 +6,7 @@
           <div class="container">
             <div class="row">
               <div class="col-md-12">
-                <h3>Hint</h3>
+                <h3>提示</h3>
               </div>
             </div>
           </div>
@@ -26,8 +26,8 @@
                 <div class="col-md-12">
                   <div class="form-group">
                     <label>
-                      Title<br />
-                      <small>Content displayed before hint unlocking</small>
+                      标题<br />
+                      <small>解锁提示前显示的内容</small>
                     </label>
                     <input
                       type="text"
@@ -39,8 +39,8 @@
 
                   <div class="form-group">
                     <label>
-                      Hint<br />
-                      <small>Markdown &amp; HTML are supported</small>
+                      提示内容<br />
+                      <small>支持 Markdown 和 HTML</small>
                     </label>
                     <textarea
                       type="text"
@@ -53,8 +53,8 @@
 
                   <div class="form-group">
                     <label>
-                      Cost<br />
-                      <small>How many points it costs to see your hint.</small>
+                      费用<br />
+                      <small>查看此提示所需的积分数。</small>
                     </label>
                     <input
                       type="number"
@@ -66,10 +66,9 @@
 
                   <div class="form-group">
                     <label>
-                      Requirements<br />
+                      前置提示<br />
                       <small
-                        >Hints that must be unlocked before unlocking this
-                        hint</small
+                        >解锁此提示前必须先解锁的提示</small
                       >
                     </label>
                     <div
@@ -97,7 +96,7 @@
             <div class="container">
               <div class="row">
                 <div class="col-md-12">
-                  <button class="btn btn-primary float-right">Submit</button>
+                  <button class="btn btn-primary float-right">提交</button>
                 </div>
               </div>
             </div>

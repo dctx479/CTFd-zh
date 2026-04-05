@@ -122,8 +122,8 @@ function correctSubmissions(_event) {
   let target = submissionIDs.length === 1 ? "submission" : "submissions";
 
   ezQuery({
-    title: "Correct Submissions",
-    body: `Are you sure you want to mark ${submissionIDs.length} ${target} correct?`,
+    title: "标记正确",
+    body: `确定要将 ${submissionIDs.length} 个提交标记为正确吗？`,
     success: function () {
       const reqs = [];
       for (var subId of submissionIDs) {
@@ -153,12 +153,12 @@ function deleteSelectedSubmissions(event, target) {
     case "solves":
       submissions = $("input[data-submission-type=correct]:checked");
       type = "solve";
-      title = "Solves";
+      title = "解题记录";
       break;
     case "fails":
       submissions = $("input[data-submission-type=incorrect]:checked");
       type = "fail";
-      title = "Fails";
+      title = "失败记录";
       break;
     default:
       break;
@@ -170,8 +170,8 @@ function deleteSelectedSubmissions(event, target) {
   let target_string = submissionIDs.length === 1 ? type : type + "s";
 
   ezQuery({
-    title: `Delete ${title}`,
-    body: `Are you sure you want to delete ${submissionIDs.length} ${target_string}?`,
+    title: `删除${title}`,
+    body: `确定要删除 ${submissionIDs.length} 条记录吗？`,
     success: function () {
       const reqs = [];
       for (var subId of submissionIDs) {
@@ -191,8 +191,8 @@ function deleteSelectedAwards(_event) {
   let target = awardIDs.length === 1 ? "award" : "awards";
 
   ezQuery({
-    title: `Delete Awards`,
-    body: `Are you sure you want to delete ${awardIDs.length} ${target}?`,
+    title: `删除奖励`,
+    body: `确定要删除 ${awardIDs.length} 个奖励吗？`,
     success: function () {
       const reqs = [];
       for (var awardID of awardIDs) {
@@ -223,20 +223,20 @@ function solveSelectedMissingChallenges(event) {
   let target = challengeIDs.length === 1 ? "challenge" : "challenges";
 
   ezQuery({
-    title: `Mark Correct`,
-    body: `Are you sure you want to mark ${
+    title: `标记正确`,
+    body: `确定要将 ${
       challengeIDs.length
-    } ${target} correct for ${htmlEntities(window.TEAM_NAME)}?`,
+    } 道题目标记为 ${htmlEntities(window.TEAM_NAME)} 已解答吗？`,
     success: function () {
       ezAlert({
-        title: `User Attribution`,
+        title: `归属用户`,
         body: `
-        Which user on ${htmlEntities(window.TEAM_NAME)} solved these challenges?
+        ${htmlEntities(window.TEAM_NAME)} 队伍中哪个用户解答了这些题目？
         <div class="pb-3" id="query-team-member-solve">
         ${$("#team-member-select").html()}
         </div>
         `,
-        button: "Mark Correct",
+        button: "标记正确",
         success: function () {
           const USER_ID = $("#query-team-member-solve > select").val();
           const reqs = [];
@@ -456,7 +456,7 @@ $(() => {
       $("#user-award-form > #results").append(
         ezBadge({
           type: "error",
-          body: "Please select a team member",
+          body: "请选择一名队伍成员",
         }),
       );
       return;
@@ -508,8 +508,8 @@ $(() => {
     const row = $(this).parent().parent();
 
     ezQuery({
-      title: "Remove Member",
-      body: "Are you sure you want to remove {0} from {1}? <br><br><strong>All of their challenge solves, attempts, awards, and unlocked hints will also be deleted!</strong>".format(
+      title: "移除成员",
+      body: "确定要将 {0} 从 {1} 中移除吗？<br><br><strong>他们的所有解题记录、提交、奖励和已解锁提示也将被删除！</strong>".format(
         "<strong>" + htmlEntities(member_name) + "</strong>",
         "<strong>" + htmlEntities(window.TEAM_NAME) + "</strong>",
       ),
@@ -532,8 +532,8 @@ $(() => {
 
   $(".delete-team").click(function (_e) {
     ezQuery({
-      title: "Delete Team",
-      body: "Are you sure you want to delete {0}".format(
+      title: "删除队伍",
+      body: "确定要删除 {0} 吗？".format(
         "<strong>" + htmlEntities(window.TEAM_NAME) + "</strong>",
       ),
       success: function () {

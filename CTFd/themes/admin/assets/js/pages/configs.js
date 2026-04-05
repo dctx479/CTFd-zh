@@ -126,9 +126,9 @@ function updateConfigs(event) {
     } else {
       let errors = _response.errors.value.join("\n");
       ezAlert({
-        title: "Error!",
+        title: "错误！",
         body: errors,
-        button: "Okay",
+        button: "确定",
       });
     }
   });
@@ -154,9 +154,9 @@ function uploadLogo(event) {
           window.location.reload();
         } else {
           ezAlert({
-            title: "Error!",
-            body: "Logo uploading failed!",
-            button: "Okay",
+            title: "错误！",
+            body: "Logo 上传失败！",
+            button: "确定",
           });
         }
       });
@@ -167,10 +167,10 @@ function switchUserMode(event) {
   event.preventDefault();
   let formData = new FormData(event.target);
   let msg =
-    "Are you sure you'd like to switch user modes?\n\nAll submissions, awards, unlocks, and tracking will be deleted!";
+    "确定要切换用户模式吗？\n\n所有提交记录、奖励、解锁和跟踪数据将被删除！";
   if (formData.get("user_mode") == "users") {
     msg =
-      "Are you sure you'd like to switch user modes?\n\nAll teams, submissions, awards, unlocks, and tracking will be deleted!";
+      "确定要切换用户模式吗？\n\n所有队伍、提交记录、奖励、解锁和跟踪数据将被删除！";
   }
   if (confirm(msg)) {
     // Use original form to include original input
@@ -189,8 +189,8 @@ function switchUserMode(event) {
 
 function removeLogo() {
   ezQuery({
-    title: "Remove logo",
-    body: "Are you sure you'd like to remove the CTF logo?",
+    title: "移除 Logo",
+    body: "确定要移除 CTF Logo 吗？",
     success: function () {
       const params = {
         value: null,
@@ -224,9 +224,9 @@ function smallIconUpload(event) {
           window.location.reload();
         } else {
           ezAlert({
-            title: "Error!",
-            body: "Icon uploading failed!",
-            button: "Okay",
+            title: "错误！",
+            body: "图标上传失败！",
+            button: "确定",
           });
         }
       });
@@ -235,8 +235,8 @@ function smallIconUpload(event) {
 
 function removeSmallIcon() {
   ezQuery({
-    title: "Remove logo",
-    body: "Are you sure you'd like to remove the small site icon?",
+    title: "移除图标",
+    body: "确定要移除网站小图标吗？",
     success: function () {
       const params = {
         value: null,
@@ -262,11 +262,8 @@ function importCSV(event) {
 
   let pg = ezProgressBar({
     width: 0,
-    title: "Upload Progress",
+    title: "上传进度",
   });
-
-  $.ajax({
-    url: CTFd.config.urlRoot + "/admin/import/csv",
     type: "POST",
     data: form_data,
     processData: false,
@@ -331,7 +328,7 @@ function importConfig(event) {
 
   let pg = ezProgressBar({
     width: 0,
-    title: "Upload Progress",
+    title: "上传进度",
   });
 
   $.ajax({

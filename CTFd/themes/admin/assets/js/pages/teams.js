@@ -11,8 +11,8 @@ function deleteSelectedTeams(_event) {
   let target = teamIDs.length === 1 ? "team" : "teams";
 
   ezQuery({
-    title: "Delete Teams",
-    body: `Are you sure you want to delete ${teamIDs.length} ${target}?`,
+    title: "删除队伍",
+    body: `确定要删除 ${teamIDs.length} 个队伍吗？`,
     success: function () {
       const reqs = [];
       for (var teamID of teamIDs) {
@@ -35,28 +35,28 @@ function bulkEditTeams(_event) {
   });
 
   ezAlert({
-    title: "Edit Teams",
+    title: "批量编辑队伍",
     body: $(`
     <form id="teams-bulk-edit">
       <div class="form-group">
-        <label>Banned</label>
+        <label>已封禁</label>
         <select name="banned" data-initial="">
           <option value="">--</option>
-          <option value="true">True</option>
-          <option value="false">False</option>
+          <option value="true">是</option>
+          <option value="false">否</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Hidden</label>
+        <label>已隐藏</label>
         <select name="hidden" data-initial="">
           <option value="">--</option>
-          <option value="true">True</option>
-          <option value="false">False</option>
+          <option value="true">是</option>
+          <option value="false">否</option>
         </select>
       </div>
     </form>
     `),
-    button: "Submit",
+    button: "提交",
     success: function () {
       let data = $("#teams-bulk-edit").serializeJSON(true);
       const reqs = [];

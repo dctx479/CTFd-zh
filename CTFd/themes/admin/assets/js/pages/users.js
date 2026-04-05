@@ -11,8 +11,8 @@ function deleteSelectedUsers(_event) {
   let target = userIDs.length === 1 ? "user" : "users";
 
   ezQuery({
-    title: "Delete Users",
-    body: `Are you sure you want to delete ${userIDs.length} ${target}?`,
+    title: "删除用户",
+    body: `确定要删除 ${userIDs.length} 个用户吗？`,
     success: function () {
       const reqs = [];
       for (var userID of userIDs) {
@@ -35,36 +35,36 @@ function bulkEditUsers(_event) {
   });
 
   ezAlert({
-    title: "Edit Users",
+    title: "批量编辑用户",
     body: $(`
     <form id="users-bulk-edit">
       <div class="form-group">
-        <label>Verified</label>
+        <label>已验证</label>
         <select name="verified" data-initial="">
           <option value="">--</option>
-          <option value="true">True</option>
-          <option value="false">False</option>
+          <option value="true">是</option>
+          <option value="false">否</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Banned</label>
+        <label>已封禁</label>
         <select name="banned" data-initial="">
           <option value="">--</option>
-          <option value="true">True</option>
-          <option value="false">False</option>
+          <option value="true">是</option>
+          <option value="false">否</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Hidden</label>
+        <label>已隐藏</label>
         <select name="hidden" data-initial="">
           <option value="">--</option>
-          <option value="true">True</option>
-          <option value="false">False</option>
+          <option value="true">是</option>
+          <option value="false">否</option>
         </select>
       </div>
     </form>
     `),
-    button: "Submit",
+    button: "提交",
     success: function () {
       let data = $("#users-bulk-edit").serializeJSON(true);
       const reqs = [];
