@@ -1,25 +1,28 @@
 name: Sync Upstream & Auto-Localize
 
 # ============================================================
-# 可配置项（在仓库 Settings → Secrets and variables → Actions
-# 的 Variables 标签页中设置，留空则使用下方默认值）：
+# Variables（Settings → Secrets and variables → Actions → Variables）:
 #
-#   UPSTREAM_REPO    上游仓库 URL
-#                    默认: https://github.com/CTFd/CTFd.git
-#   UPSTREAM_BRANCH  上游分支名
-#                    默认: master
-#   TARGET_BRANCH    推送到本仓库的分支名
-#                    默认: master
-#   LOCALES          需要更新的语言代码，空格分隔
-#                    默认: zh_Hans_CN zh_Hant_TW
-#   PYTHON_VERSION   Python 版本
-#                    默认: 3.11
-#   SYNC_SCHEDULE    同步频率（cron 格式，修改后需重新推送工作流）
-#                    默认: '0 2 * * *'（每天 UTC 02:00 / 北京时间 10:00）
+#   UPSTREAM_REPO      上游仓库 URL
+#                      默认: https://github.com/CTFd/CTFd.git
+#   UPSTREAM_BRANCH    上游分支名
+#                      默认: master
+#   TARGET_BRANCH      推送到本仓库的分支名
+#                      默认: master
+#   LOCALES            需要更新的语言代码，空格分隔
+#                      默认: zh_Hans_CN zh_Hant_TW
+#   PYTHON_VERSION     Python 版本
+#                      默认: 3.11
+#   TRANSLATE_PROVIDER 翻译 API 提供商：deepl 或 anthropic
+#                      默认: deepl（未配置任何 API Key 时跳过自动翻译）
 #
-# 可配置项（Secrets 标签页，用于敏感信息）：
-#   PAT_TOKEN        推送权限 Token（留空则使用 GITHUB_TOKEN，
-#                    仅当需要触发后续 Actions 时才需要配置 PAT）
+# Secrets（Settings → Secrets and variables → Actions → Secrets）:
+#
+#   PAT_TOKEN          Personal Access Token（可选，用于触发后续 Actions）
+#   DEEPL_API_KEY      DeepL API Key（可选，用于自动翻译新字符串）
+#                      免费版：https://www.deepl.com/pro-api（50万字符/月）
+#   ANTHROPIC_API_KEY  Anthropic API Key（可选，provider=anthropic 时使用）
+#                      https://console.anthropic.com/
 # ============================================================
 
 on:
@@ -34,11 +37,12 @@ permissions:
   issues: write
 
 env:
-  UPSTREAM_REPO:   ${{ vars.UPSTREAM_REPO   || 'https://github.com/CTFd/CTFd.git' }}
-  UPSTREAM_BRANCH: ${{ vars.UPSTREAM_BRANCH || 'master' }}
-  TARGET_BRANCH:   ${{ vars.TARGET_BRANCH   || 'master' }}
-  LOCALES:         ${{ vars.LOCALES         || 'zh_Hans_CN zh_Hant_TW' }}
-  PYTHON_VERSION:  ${{ vars.PYTHON_VERSION  || '3.11' }}
+  UPSTREAM_REPO:      ${{ vars.UPSTREAM_REPO      || 'https://github.com/CTFd/CTFd.git' }}
+  UPSTREAM_BRANCH:    ${{ vars.UPSTREAM_BRANCH    || 'master' }}
+  TARGET_BRANCH:      ${{ vars.TARGET_BRANCH      || 'master' }}
+  LOCALES:            ${{ vars.LOCALES            || 'zh_Hans_CN zh_Hant_TW' }}
+  PYTHON_VERSION:     ${{ vars.PYTHON_VERSION     || '3.11' }}
+  TRANSLATE_PROVIDER: ${{ vars.TRANSLATE_PROVIDER || 'deepl' }}
 
 jobs:
   sync:
@@ -99,6 +103,21 @@ jobs:
         if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
         run: pip install Babel
 
+      - name: Install translation API dependencies
+        if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
+        run: |
+          if [ "$TRANSLATE_PROVIDER" = "deepl" ] && [ -n "$DEEPL_API_KEY" ]; then
+            echo "DeepL API Key 已配置，将启用自动翻译"
+          elif [ "$TRANSLATE_PROVIDER" = "anthropic" ] && [ -n "$ANTHROPIC_API_KEY" ]; then
+            pip install anthropic
+            echo "Anthropic API Key 已配置，将启用自动翻译"
+          else
+            echo "未配置翻译 API Key，跳过自动翻译（新增字符串将留空）"
+          fi
+        env:
+          DEEPL_API_KEY:     ${{ secrets.DEEPL_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
       - name: Extract new translation strings
         if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
         run: |
@@ -122,6 +141,31 @@ jobs:
             untranslated=$(grep -c '^msgstr ""' \
               "CTFd/translations/$locale/LC_MESSAGES/messages.po" || true)
             echo "  → $untranslated untranslated string(s)"
+          done
+
+      - name: Auto-translate new strings via API
+        if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
+        env:
+          DEEPL_API_KEY:     ${{ secrets.DEEPL_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # 判断是否有可用的翻译 API
+          HAS_API=false
+          if [ "$TRANSLATE_PROVIDER" = "deepl" ] && [ -n "$DEEPL_API_KEY" ]; then
+            HAS_API=true
+          elif [ "$TRANSLATE_PROVIDER" = "anthropic" ] && [ -n "$ANTHROPIC_API_KEY" ]; then
+            HAS_API=true
+          fi
+
+          if [ "$HAS_API" = "false" ]; then
+            echo "未配置翻译 API，跳过此步骤"
+            exit 0
+          fi
+
+          for locale in $LOCALES; do
+            po_file="CTFd/translations/$locale/LC_MESSAGES/messages.po"
+            echo "自动翻译 $locale ..."
+            python scripts/auto_translate_po.py "$po_file" --provider "$TRANSLATE_PROVIDER"
           done
 
       - name: Compile all .mo files
