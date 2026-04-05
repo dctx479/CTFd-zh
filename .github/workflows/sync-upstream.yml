@@ -1,27 +1,58 @@
 name: Sync Upstream & Auto-Localize
 
+# ============================================================
+# 可配置项（在仓库 Settings → Secrets and variables → Actions
+# 的 Variables 标签页中设置，留空则使用下方默认值）：
+#
+#   UPSTREAM_REPO    上游仓库 URL
+#                    默认: https://github.com/CTFd/CTFd.git
+#   UPSTREAM_BRANCH  上游分支名
+#                    默认: master
+#   TARGET_BRANCH    推送到本仓库的分支名
+#                    默认: master
+#   LOCALES          需要更新的语言代码，空格分隔
+#                    默认: zh_Hans_CN zh_Hant_TW
+#   PYTHON_VERSION   Python 版本
+#                    默认: 3.11
+#   SYNC_SCHEDULE    同步频率（cron 格式，修改后需重新推送工作流）
+#                    默认: '0 2 * * *'（每天 UTC 02:00 / 北京时间 10:00）
+#
+# 可配置项（Secrets 标签页，用于敏感信息）：
+#   PAT_TOKEN        推送权限 Token（留空则使用 GITHUB_TOKEN，
+#                    仅当需要触发后续 Actions 时才需要配置 PAT）
+# ============================================================
+
 on:
   schedule:
-    # 每天 UTC 02:00（北京时间 10:00）运行
+    # 每天 UTC 02:00（北京时间 10:00）
+    # 注意：cron 表达式不支持 vars 表达式，如需修改频率请直接编辑此行
     - cron: '0 2 * * *'
   workflow_dispatch:
-    # 支持手动触发
 
 permissions:
   contents: write
-  pull-requests: write
+  issues: write
+
+env:
+  UPSTREAM_REPO:   ${{ vars.UPSTREAM_REPO   || 'https://github.com/CTFd/CTFd.git' }}
+  UPSTREAM_BRANCH: ${{ vars.UPSTREAM_BRANCH || 'master' }}
+  TARGET_BRANCH:   ${{ vars.TARGET_BRANCH   || 'master' }}
+  LOCALES:         ${{ vars.LOCALES         || 'zh_Hans_CN zh_Hant_TW' }}
+  PYTHON_VERSION:  ${{ vars.PYTHON_VERSION  || '3.11' }}
 
 jobs:
   sync:
-    name: Sync from CTFd/CTFd and re-compile translations
+    name: Sync upstream and recompile translations
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout fork (dctx479/CTFd-zh)
+      - name: Checkout fork
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # 优先使用 PAT（可触发后续 Actions），否则退回 GITHUB_TOKEN
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          ref: ${{ env.TARGET_BRANCH }}
 
       - name: Set up Git identity
         run: |
@@ -30,98 +61,110 @@ jobs:
 
       - name: Add upstream remote
         run: |
-          git remote add upstream https://github.com/CTFd/CTFd.git || true
-          git fetch upstream master
+          git remote add upstream "$UPSTREAM_REPO" || true
+          git fetch upstream "$UPSTREAM_BRANCH"
 
       - name: Check if upstream has new commits
         id: check
         run: |
-          UPSTREAM_SHA=$(git rev-parse upstream/master)
+          UPSTREAM_SHA=$(git rev-parse "upstream/$UPSTREAM_BRANCH")
           LOCAL_SHA=$(git rev-parse HEAD)
           echo "upstream_sha=$UPSTREAM_SHA" >> $GITHUB_OUTPUT
-          echo "local_sha=$LOCAL_SHA" >> $GITHUB_OUTPUT
           if [ "$UPSTREAM_SHA" = "$LOCAL_SHA" ]; then
             echo "has_new=false" >> $GITHUB_OUTPUT
-            echo "No new upstream commits."
+            echo "No new upstream commits, skipping."
           else
             echo "has_new=true" >> $GITHUB_OUTPUT
-            echo "New upstream commits found."
+            echo "New commits found: $UPSTREAM_SHA"
           fi
 
       - name: Try to merge upstream
         if: steps.check.outputs.has_new == 'true'
         id: merge
         run: |
-          git merge upstream/master --no-edit --strategy-option=ours || echo "merge_conflict=true" >> $GITHUB_OUTPUT
-          echo "merge_conflict=false" >> $GITHUB_OUTPUT
+          if git merge "upstream/$UPSTREAM_BRANCH" --no-edit --strategy-option=ours; then
+            echo "merge_conflict=false" >> $GITHUB_OUTPUT
+          else
+            echo "merge_conflict=true" >> $GITHUB_OUTPUT
+            git merge --abort || true
+          fi
 
       - name: Set up Python
-        if: steps.check.outputs.has_new == 'true'
+        if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Babel
-        if: steps.check.outputs.has_new == 'true'
+        if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
         run: pip install Babel
 
       - name: Extract new translation strings
-        if: steps.check.outputs.has_new == 'true'
+        if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
         run: |
           pybabel extract \
             -F babel.cfg \
             -k lazy_gettext \
             -o messages.pot \
             CTFd/
-          echo "Extraction complete. New strings in messages.pot:"
-          grep -c "^msgid" messages.pot || true
+          echo "msgid count: $(grep -c '^msgid' messages.pot)"
 
-      - name: Update zh_Hans_CN .po file with new strings
-        if: steps.check.outputs.has_new == 'true'
+      - name: Update .po files for each locale
+        if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
         run: |
-          pybabel update \
-            -i messages.pot \
-            -d CTFd/translations \
-            -l zh_Hans_CN \
-            --no-wrap
-          # Report new untranslated strings
-          echo "Untranslated strings in zh_Hans_CN:"
-          grep -A1 'msgstr ""' CTFd/translations/zh_Hans_CN/LC_MESSAGES/messages.po \
-            | grep "^msgid" | head -20 || true
-
-      - name: Update zh_Hant_TW .po file with new strings
-        if: steps.check.outputs.has_new == 'true'
-        run: |
-          pybabel update \
-            -i messages.pot \
-            -d CTFd/translations \
-            -l zh_Hant_TW \
-            --no-wrap
+          for locale in $LOCALES; do
+            echo "Updating locale: $locale"
+            pybabel update \
+              -i messages.pot \
+              -d CTFd/translations \
+              -l "$locale" \
+              --no-wrap
+            untranslated=$(grep -c '^msgstr ""' \
+              "CTFd/translations/$locale/LC_MESSAGES/messages.po" || true)
+            echo "  → $untranslated untranslated string(s)"
+          done
 
       - name: Compile all .mo files
-        if: steps.check.outputs.has_new == 'true'
-        run: |
-          pybabel compile -d CTFd/translations
-          echo "Compilation complete."
+        if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
+        run: pybabel compile -d CTFd/translations
 
-      - name: Commit and push if there are changes
-        if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict != 'true'
+      - name: Commit and push
+        if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'false'
         run: |
           git add -A
-          git diff --cached --quiet && echo "Nothing to commit." && exit 0
-          UPSTREAM_SHORT=$(git rev-parse --short upstream/master)
-          git commit -m "chore: sync upstream CTFd@${UPSTREAM_SHORT} and recompile translations"
-          git push origin master
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+          UPSTREAM_SHORT=$(git rev-parse --short "upstream/$UPSTREAM_BRANCH")
+          git commit -m "chore: sync upstream@${UPSTREAM_SHORT} and recompile translations"
+          git push origin "$TARGET_BRANCH"
 
-      - name: Open PR on merge conflict
+      - name: Open issue on merge conflict
         if: steps.check.outputs.has_new == 'true' && steps.merge.outputs.merge_conflict == 'true'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
+            const upstreamRepo = process.env.UPSTREAM_REPO;
+            const upstreamBranch = process.env.UPSTREAM_BRANCH;
+            const targetBranch = process.env.TARGET_BRANCH;
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: '⚠️ 上游同步冲突，需要人工处理',
-              body: `上游 [CTFd/CTFd](https://github.com/CTFd/CTFd) 有新提交，但自动合并时发生冲突。\n\n请手动合并并解决冲突：\n\`\`\`bash\ngit fetch upstream master\ngit merge upstream/master\n# 解决冲突后\ngit push origin master\n\`\`\`\n\n触发时间：${new Date().toISOString()}`,
-              labels: ['upstream-conflict']
+              body: [
+                `上游 [${upstreamRepo}](${upstreamRepo}) \`${upstreamBranch}\` 分支有新提交，但自动合并时发生冲突。`,
+                '',
+                '请手动合并并解决冲突：',
+                '```bash',
+                `git fetch upstream ${upstreamBranch}`,
+                `git merge upstream/${upstreamBranch}`,
+                '# 解决冲突后',
+                `git push origin ${targetBranch}`,
+                '```',
+                '',
+                `触发时间：${new Date().toISOString()}`,
+              ].join('\n'),
+              labels: ['upstream-conflict'],
             });
